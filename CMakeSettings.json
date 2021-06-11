@@ -1,0 +1,72 @@
+﻿{
+  "environments": [
+    {
+      "environment": "emscripten",
+      "emsdk": "${env.W4_KIT}\\.prerequisites\\emsdk",
+      "emscripten_cmake": "${env.emsdk}\\upstream\\emscripten\\cmake\\Modules\\Platform\\Emscripten.cmake",
+      "INCLUDE": "${env.emsdk}\\upstream\\emscripten\\system\\include\\libcxx;${env.emsdk}\\upstream\\emscripten\\system\\lib\\libcxxabi\\include;${env.emsdk}\\upstream\\emscripten\\system\\include\\compat;${env.emsdk}\\upstream\\emscripten\\system\\include;${env.emsdk}\\upstream\\emscripten\\system\\include\\libc;${env.emsdk}\\upstream\\emscripten\\system\\lib\\libc\\musl\\arch\\emscripten;${env.emsdk}\\upstream\\emscripten\\system\\local\\include;${env.emsdk}\\upstream\\emscripten\\system\\include\\SSE;${env.emsdk}\\upstream\\emscripten\\system\\include\\neon;${env.emsdk}\\upstream\\emscripten\\system\\lib\\compiler-rt\\include;${env.emsdk}\\upstream\\emscripten\\system\\lib\\libunwind\\include;${env.emsdk}\\upstream\\emscripten\\system\\include\\SDL;${env.emsdk}\\upstream\\lib\\clang\\12.0.0\\include"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\.cmake\\${name}",
+      "cmakeToolchain": "${env.emscripten_cmake}",
+      "inheritEnvironments": [
+        "emscripten"
+      ],
+      "variables": [],
+      "intelliSenseMode": "windows-clang-x64"
+    },
+    {
+      "name": "Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}\\.cmake\\${name}",
+      "cmakeToolchain": "${env.emscripten_cmake}",
+      "inheritEnvironments": [
+        "emscripten"
+      ],
+      "variables": [],
+      "intelliSenseMode": "windows-clang-x64"
+    },
+    {
+      "name": "Shipping",
+      "generator": "Ninja",
+      "configurationType": "Shipping",
+      "buildRoot": "${projectDir}\\.cmake\\${name}",
+      "cmakeToolchain": "${env.emscripten_cmake}",
+      "inheritEnvironments": [
+        "emscripten"
+      ],
+      "variables": [],
+      "intelliSenseMode": "windows-clang-x64"
+    },
+    {
+      "name": "ReleaseMinSize",
+      "generator": "Ninja",
+      "configurationType": "ReleaseMinSize",
+      "buildRoot": "${projectDir}\\.cmake\\${name}",
+      "cmakeToolchain": "${env.emscripten_cmake}",
+      "inheritEnvironments": [
+        "emscripten"
+      ],
+      "variables": [],
+      "intelliSenseMode": "windows-clang-x64"
+    },
+    {
+      "name": "ShippingMinSize",
+      "generator": "Ninja",
+      "configurationType": "ShippingMinSize",
+      "buildRoot": "${projectDir}\\.cmake\\${name}",
+      "cmakeToolchain": "${env.emscripten_cmake}",
+      "inheritEnvironments": [
+        "emscripten"
+      ],
+      "variables": [],
+      "intelliSenseMode": "windows-clang-x64"
+    }
+  ]
+}
