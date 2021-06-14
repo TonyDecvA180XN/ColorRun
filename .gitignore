@@ -1,3 +1,4 @@
 .cmake/
-_deploy/
 .vs/
+_deploy/
+_cache/
