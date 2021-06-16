@@ -2,19 +2,25 @@
 #include "MathUtils.h"
 #include "DebugHelper.h"
 #include "Level.h"
+#include "GUIManager.h"
 
 W4_USE_UNSTRICT_INTERFACE
 
 class ColorRun : public IGame
 {
 public:
+	void onConfig() override
+	{
+		Platform::setWindowStyle("any");
+	}
+
 	void onStart() override
 	{
 		DebugHelper::buildGizmo();
 		auto cam = Render::getScreenCamera();
-		cam->setFov(80.0f);
-		cam->setWorldTranslation({ 0.0f, 10.0f, -10.0f });
-		cam->setWorldRotation(Rotator(45_deg, 0, 0.0f));
+		cam->setFov(60.0f);
+		cam->setWorldTranslation({ 0.0f, 5.0f, -10.0f });
+		cam->setWorldRotation(Rotator(22.5_deg, 0, 0.0f));
 		cam->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 		//camCenter = make::sptr<w4::render::Node>();
 		//camCenter->setWorldTranslation({ 0, 5.0f, 0 });
@@ -22,50 +28,132 @@ public:
 		//Render::getRoot()->addChild(camCenter);
 
 		auto skybox = Cubemap::fromImages({
-			resources::Image::get("textures/env/field/px.png"),
-			resources::Image::get("textures/env/field/nx.png"),
-			resources::Image::get("textures/env/field/py.png"),
-			resources::Image::get("textures/env/field/ny.png"),
-			resources::Image::get("textures/env/field/pz.png"),
-			resources::Image::get("textures/env/field/nz.png"),
+			resources::Image::get("textures/env/sky/px.png"),
+			resources::Image::get("textures/env/sky/nx.png"),
+			resources::Image::get("textures/env/sky/py.png"),
+			resources::Image::get("textures/env/sky/ny.png"),
+			resources::Image::get("textures/env/sky/pz.png"),
+			resources::Image::get("textures/env/sky/nz.png")
 			});
+
 		cam->getSkybox()->setCubemap(skybox);
+
+
+		auto tex = w4::resources::Texture::get("textures/grass.jpg");
+		auto mat = Material::getDefaultLambert()->createInstance();
+		mat->setTexture(TextureId::TEXTURE_0, tex);
+		auto mesh = Mesh::create::plane({ 32, 32 }, TRUE);
+		mesh->setMaterialInst(mat);
+		mesh->setWorldScale({ 16,16,16 });
+		mesh->rotateWorld(Rotator(90_deg, 0, 0));
+		mesh->translateWorld({ 0, -0.1, 512 / 2 - 10 });
+		Render::getRoot()->addChild(mesh);
 
 		playhead = make::sptr<w4::render::Node>();
 		playhead->addChild(cam);
 
-		auto player = Asset::get("meshes/monkey.w4a")->getFirstRoot();
+		player = Asset::get("meshes/monkey.w4a")->getFirstRoot()->getChild<Mesh>("monkey");
 		player->translateWorld({ 0, 1, 0 });
 		playhead->addChild(player);
 
 		Render::getRoot()->addChild(playhead);
 
 		auto light = make::sptr<PointLight>("light");
-		light->setColor({0, 0, 1});
-		light->setDecayRate(LightDecayRate::Linear);
-		light->setIntensity(0.5f);
-		light->setDebugViewColor({ 1,1,1,1 }).enableDebugView(true);
-		light->translateWorld({ 3, 3, 2 });
+		light->setWorldTranslation({ 0.f, 5.f, 2.f });
+		light->setDecayRate(core::LightDecayRate::None);
+		light->setIntensity(0.5);
 		playhead->addChild(light);
 
-		Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.0f, 0.5f, 0.0f));
+		Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
 		Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, -1.0f));
-		Render::getPass(0)->getDirectionalLight()->enableShadows();
+		//Render::getPass(0)->getDirectionalLight()->enableShadows();
+		/*Render::getRoot()->traversalTyped<PointLight>([this](cref<PointLight> node)
+			{
+				node->setColor({ 1,1,0 });
+			});*/
+			//Render::getRoot()->traversalTyped<SpotLight>([this](cref<SpotLight> node)
+			//	{
+			//		node->setEnabled(FALSE);
+			//	});
 
-		m_level.LoadMeshes("meshes/chunks.w4a", 4);
-		m_level.BuildMap(16, Render::getRoot());
+		m_level.LoadMeshes("meshes/chunks.w4a", 1);
+		m_level.BuildMap(32, Render::getRoot());
+
+
+
+		auto ui = createWidget<Widget>(nullptr, "RootUI");
+
+		//m_gui.LoadImages("textures/gui/");
+
+		m_gui.BuildUI(ui, "ui/");
+
+		w4::event::Touch::Begin::subscribe(std::bind(&ColorRun::onTouchBegin, this, std::placeholders::_1));
+		w4::event::Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
+		w4::event::Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
+
+		;
 	}
 
 	void onUpdate(float dt) override
 	{
 		//camCenter->rotateWorld(Rotator(0, dt / 2, 0));
-		playhead->translateWorld({ 0, 0, 10 * dt });
-		//m_level.Update(playhead->getWorldTranslation().z);
+		playhead->translateWorld({ 0, 0, 4 * dt });
+		m_level.Update(playhead->getWorldTranslation().z);
+		auto color = std::string("Color: ") + (m_buttons[0] ? "R" : "") + (m_buttons[1] ? "G" : "") + (m_buttons[2] ? "B" : "");
+		m_currentColor->setText(color);
 	}
+
+	void onTouchBegin(const event::Touch::Begin & evt)
+	{
+		vec2 coords{
+			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
+			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
+		};
+		auto color = m_gui.Update(coords);
+		if (color.a)
+		{
+			player->getMaterialInst()->setParam("baseColor", color);
+		}
+	}
+
+	void onTouchMove(const event::Touch::Move & evt)
+	{
+		vec2 coords{
+			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
+			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
+		};
+		auto color = m_gui.Update(coords);
+		if (color.a)
+		{
+			player->getMaterialInst()->setParam("baseColor", color);
+		}
+	}
+
+	void onTouchEnd(const event::Touch::End & evt)
+	{
+		vec2 coords{
+			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
+			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
+		};
+		auto color = m_gui.Update(coords);
+		if (color.a)
+		{
+			player->getMaterialInst()->setParam("baseColor", color);
+		}
+		m_gui.Reset();
+	}
+
 private:
 	w4::sptr<w4::render::Node> camCenter;
 	w4::sptr<w4::render::Node> playhead;
+	w4::sptr<w4::render::Mesh> player;
 	Level m_level;
+	GUIManager m_gui;
+
+	BOOL m_buttons[3];
+	w4::sptr<gui::Label>m_currentColor;
+public:
+	w4::sptr<w4::gui::Button> m_redBtn, m_greenBtn, m_blueBtn;
 };
 
 W4_RUN(ColorRun)
