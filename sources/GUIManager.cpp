@@ -54,6 +54,8 @@ void GUIManager::BuildUI(w4::sptr<w4::gui::Widget> root, std::string path)
     }
     
     m_currentColor->setImage("ui/111.png");
+    m_currentColor->setSize({ 100, 100 });
+
     m_combo.reset();
 }
 
@@ -74,12 +76,15 @@ w4::math::vec4 GUIManager::Update(w4::math::vec2 cursor)
                 if (m_combo.all())
                 {
                     m_currentColor->setImage("ui/000.png");
+                    m_currentColor->setSize({ 100, 100 });
+
                     return { 0, 0, 0, 1 };
                 }
 
                 else
                 {
                     m_currentColor->setImage("ui/" + m_combo.to_string() + ".png");
+                    m_currentColor->setSize({ 100, 100 });
                     return { b2f(m_combo[2]), b2f(m_combo[1]), b2f(m_combo[0]), 1 };
                 }
             }

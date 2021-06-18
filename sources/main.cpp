@@ -3,6 +3,8 @@
 #include "DebugHelper.h"
 #include "Level.h"
 #include "GUIManager.h"
+#include "Hub.h"
+#include "Entity.h"
 
 W4_USE_UNSTRICT_INTERFACE
 
@@ -17,6 +19,7 @@ public:
 	void onStart() override
 	{
 		DebugHelper::buildGizmo();
+		hub.Init();
 		auto cam = Render::getScreenCamera();
 		cam->setFov(60.0f);
 		cam->setWorldTranslation({ 0.0f, 5.0f, -10.0f });
@@ -36,10 +39,12 @@ public:
 			resources::Image::get("textures/env/sky/nz.png")
 			});
 
+		skybox->setFiltering(Filtering::Level1);
 		cam->getSkybox()->setCubemap(skybox);
 
 
 		auto tex = w4::resources::Texture::get("textures/grass.jpg");
+		tex->setFiltering(Filtering::Level1);
 		auto mat = Material::getDefaultLambert()->createInstance();
 		mat->setTexture(TextureId::TEXTURE_0, tex);
 		auto mesh = Mesh::create::plane({ 32, 32 }, TRUE);
@@ -52,9 +57,11 @@ public:
 		playhead = make::sptr<w4::render::Node>();
 		playhead->addChild(cam);
 
-		player = Asset::get("meshes/monkey.w4a")->getFirstRoot()->getChild<Mesh>("monkey");
-		player->translateWorld({ 0, 1, 0 });
-		playhead->addChild(player);
+		player = make::sptr<Entity>("meshes/monkey.w4a", "monkey", "", "default");
+		player->BindResources(hub);
+		player->Transform().translateWorld({ 0, 1, 0 });
+		player->Parent(playhead);
+
 
 		Render::getRoot()->addChild(playhead);
 
@@ -91,7 +98,6 @@ public:
 		w4::event::Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
 		w4::event::Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
 
-		;
 	}
 
 	void onUpdate(float dt) override
@@ -112,7 +118,7 @@ public:
 		auto color = m_gui.Update(coords);
 		if (color.a)
 		{
-			player->getMaterialInst()->setParam("baseColor", color);
+			player->Material().setParam("baseColor", color);
 		}
 	}
 
@@ -125,7 +131,7 @@ public:
 		auto color = m_gui.Update(coords);
 		if (color.a)
 		{
-			player->getMaterialInst()->setParam("baseColor", color);
+			player->Material().setParam("baseColor", color);
 		}
 	}
 
@@ -138,7 +144,7 @@ public:
 		auto color = m_gui.Update(coords);
 		if (color.a)
 		{
-			player->getMaterialInst()->setParam("baseColor", color);
+			player->Material().setParam("baseColor", color);
 		}
 		m_gui.Reset();
 	}
@@ -146,14 +152,13 @@ public:
 private:
 	w4::sptr<w4::render::Node> camCenter;
 	w4::sptr<w4::render::Node> playhead;
-	w4::sptr<w4::render::Mesh> player;
 	Level m_level;
 	GUIManager m_gui;
 
 	BOOL m_buttons[3];
 	w4::sptr<gui::Label>m_currentColor;
-public:
-	w4::sptr<w4::gui::Button> m_redBtn, m_greenBtn, m_blueBtn;
+	Hub hub;
+	w4::sptr<Entity> player;
 };
 
 W4_RUN(ColorRun)

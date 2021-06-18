@@ -6,7 +6,7 @@ Level::LevelChunk::LevelChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_
 	m_varation(variation),
 	m_chunkMesh(chunk_mesh)
 {
-	//m_chunkMesh->setEnabled(FALSE);
+	m_chunkMesh->setEnabled(FALSE);
 }
 
 void Level::LevelChunk::Enable()
@@ -37,6 +37,37 @@ void Level::LoadMeshes(std::string path, SIZE chunk_variety)
 		// load mesh from asset
 		auto model = asset->getChild<w4::render::Mesh>(index);
 		model->rotateWorld(w4::math::Rotator(0, 180_deg, 0));
+		//static auto mat = w4::resources::Material::getDefaultBlinn()->createInstance();
+		static auto mat = w4::resources::Material::getDefaultLambert()->createInstance();
+		static auto tex = w4::resources::Texture::get("textures/road.png");
+		tex->setFiltering(w4::resources::Filtering::Level1);
+		//mat->setTexture(w4::resources::TextureId::TEXTURE_0, tex);
+		//mat->setParam("baseColor", w4::math::vec4::cref{ 1.f, 0.f, 0.f, 1.f });
+		//mat->setParam("specColor", w4::math::vec4::cref{ 0.f, 0.f, 1.f, 1.f });
+		model->traversal([](w4::render::Node & node)
+			{
+				if (node.is<w4::render::Mesh>())
+				{
+					auto m = w4::resources::Material::getDefaultLambert()->createInstance();
+					if (node.getName() == "000")
+					{
+						m->setTexture(w4::resources::TextureId::TEXTURE_0, tex);
+					}
+					if (node.getName() == "rock01")
+					{
+						m->setTexture(w4::resources::TextureId::TEXTURE_0, w4::resources::Texture::get("textures/rock.jpg"));
+					}
+					if (node.getName() == "rock02")
+					{
+						m->setTexture(w4::resources::TextureId::TEXTURE_0, w4::resources::Texture::get("textures/rock.jpg"));
+					}
+					if (node.getName() == "fence")
+					{
+						m->setTexture(w4::resources::TextureId::TEXTURE_0, w4::resources::Texture::predefined::white());
+					}
+					node.as<w4::render::Mesh>()->setMaterialInst(m);
+				}
+			});
 		m_samples.push_back(model);
 	}
 }
@@ -60,10 +91,6 @@ void Level::BuildMap(SIZE length, w4::sptr<w4::render::Node> root)
 
 		auto chunk = m_samples[current]->clone();
 		chunk->translateWorld({ 0, 0, cChunkSize * i });
-		//static auto mat = w4::resources::Material::getDefaultBlinn()->createInstance();
-		//mat->setParam("baseColor", w4::math::vec4::cref{ 1.f, 0.f, 0.f, 1.f });
-		//mat->setParam("specColor", w4::math::vec4::cref{ 0.f, 0.f, 1.f, 1.f });
-		//chunk
 		root->addChild(chunk);
 
 		m_chunks.emplace_back(i, chunk);
@@ -74,8 +101,8 @@ void Level::BuildMap(SIZE length, w4::sptr<w4::render::Node> root)
 
 void Level::Update(FLOAT playhead_z_position)
 {
-	static constexpr SIZE cChunkDrawAheadDistnace = 8;
-	static constexpr SIZE cChunkDrawBehindDistnace = 0;
+	static constexpr SIZE cChunkDrawAheadDistnace = 16;
+	static constexpr SIZE cChunkDrawBehindDistnace = 1;
 
 
 	INT64 current = playhead_z_position / cChunkSize;
