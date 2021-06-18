@@ -4,12 +4,12 @@
 
 #include "Type.h"
 
-class Level
+class Road
 {
 private:
-	class LevelChunk {
+	class RoadChunk {
 	public:
-		LevelChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh);
+		RoadChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh);
 
 		void Enable();
 
@@ -33,5 +33,5 @@ private:
 	SIZE m_chunkVariety;
 	INDEX m_activeStart{ 0 }, m_activeFinish{ 0 };
 	std::vector<w4::sptr<w4::render::Mesh>> m_samples{};
-	std::vector<LevelChunk> m_chunks{};
+	std::vector<RoadChunk> m_chunks{};
 };

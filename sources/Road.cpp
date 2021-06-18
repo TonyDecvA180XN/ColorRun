@@ -1,25 +1,25 @@
-#include "Level.h"
+#include "Road.h"
 #include <algorithm>
 #include "MathUtils.h"
 
-Level::LevelChunk::LevelChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh) :
+Road::RoadChunk::RoadChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh) :
 	m_varation(variation),
 	m_chunkMesh(chunk_mesh)
 {
 	m_chunkMesh->setEnabled(FALSE);
 }
 
-void Level::LevelChunk::Enable()
+void Road::RoadChunk::Enable()
 {
 	m_chunkMesh->setEnabled(TRUE);
 }
 
-void Level::LevelChunk::Disable()
+void Road::RoadChunk::Disable()
 {
 	m_chunkMesh->setEnabled(FALSE);
 }
 
-void Level::LoadMeshes(std::string path, SIZE chunk_variety)
+void Road::LoadMeshes(std::string path, SIZE chunk_variety)
 {
 	m_chunkVariety = chunk_variety;
 
@@ -72,7 +72,7 @@ void Level::LoadMeshes(std::string path, SIZE chunk_variety)
 	}
 }
 
-void Level::BuildMap(SIZE length, w4::sptr<w4::render::Node> root)
+void Road::BuildMap(SIZE length, w4::sptr<w4::render::Node> root)
 {
 	m_chunks.clear();
 	m_chunks.reserve(length);
@@ -99,7 +99,7 @@ void Level::BuildMap(SIZE length, w4::sptr<w4::render::Node> root)
 	m_activeStart = m_activeFinish = m_chunkVariety;
 }
 
-void Level::Update(FLOAT playhead_z_position)
+void Road::Update(FLOAT playhead_z_position)
 {
 	static constexpr SIZE cChunkDrawAheadDistnace = 16;
 	static constexpr SIZE cChunkDrawBehindDistnace = 1;

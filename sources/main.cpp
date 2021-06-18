@@ -1,7 +1,7 @@
 #include "W4Framework.h"
 #include "MathUtils.h"
 #include "DebugHelper.h"
-#include "Level.h"
+#include "Road.h"
 #include "GUIManager.h"
 #include "Hub.h"
 #include "Entity.h"
@@ -83,8 +83,8 @@ public:
 			//		node->setEnabled(FALSE);
 			//	});
 
-		m_level.LoadMeshes("meshes/chunks.w4a", 1);
-		m_level.BuildMap(32, Render::getRoot());
+		m_road.LoadMeshes("meshes/chunks.w4a", 1);
+		m_road.BuildMap(32, Render::getRoot());
 
 
 
@@ -104,7 +104,7 @@ public:
 	{
 		//camCenter->rotateWorld(Rotator(0, dt / 2, 0));
 		playhead->translateWorld({ 0, 0, 4 * dt });
-		m_level.Update(playhead->getWorldTranslation().z);
+		m_road.Update(playhead->getWorldTranslation().z);
 		auto color = std::string("Color: ") + (m_buttons[0] ? "R" : "") + (m_buttons[1] ? "G" : "") + (m_buttons[2] ? "B" : "");
 		m_currentColor->setText(color);
 	}
@@ -152,7 +152,7 @@ public:
 private:
 	w4::sptr<w4::render::Node> camCenter;
 	w4::sptr<w4::render::Node> playhead;
-	Level m_level;
+	Road m_road;
 	GUIManager m_gui;
 
 	BOOL m_buttons[3];
