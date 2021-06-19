@@ -1,24 +1,23 @@
 #include "Entity.h"
 
-Entity::Entity(const std::string asset, const std::string model, const std::string texture, const std::string material) :
-	m_assetName(asset),
-	m_modelName(model),
-	m_textureName(texture),
-	m_materialName(material)
+Entity::Entity(Hub & hub) :
+	hub(hub)
 {
 }
 
-void Entity::BindResources(Hub & hub)
+void Entity::SetMesh(std::string filename, std::string model)
 {
-	m_mesh = hub.ResolveMesh(m_assetName, m_modelName);
-	m_material = hub.ResolveMaterial(m_materialName);
+	m_mesh = hub.ResolveMesh(filename, model);
+}
 
-	if (m_textureName.size())
-	{
-		m_texture = hub.ResolveTexture(m_textureName);
-		m_material->setTexture(w4::resources::TextureId::TEXTURE_0, m_texture);
-	}
-	m_mesh->setMaterialInst(m_material);
+void Entity::SetTexture(std::string filename)
+{
+	m_texture = hub.ResolveTexture(filename);
+}
+
+void Entity::SetMaterial(std::string name)
+{
+	m_material = hub.ResolveMaterial(name);
 }
 
 w4::render::Node & Entity::Transform()

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <W4Framework.h>
-
 #include "Type.h"
 
 class Road

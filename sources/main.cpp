@@ -1,4 +1,6 @@
-#include "W4Framework.h"
+#include <W4Framework.h>
+#include <functional>
+#include <string>
 #include "MathUtils.h"
 #include "DebugHelper.h"
 #include "Road.h"
@@ -7,6 +9,8 @@
 #include "Entity.h"
 
 W4_USE_UNSTRICT_INTERFACE
+
+using namespace std::string_literals;
 
 class ColorRun : public IGame
 {
@@ -57,19 +61,37 @@ public:
 		playhead = make::sptr<w4::render::Node>();
 		playhead->addChild(cam);
 
-		player = make::sptr<Entity>("meshes/monkey.w4a", "monkey", "", "default");
-		player->BindResources(hub);
+		player = make::sptr<Entity>(hub);
+		player->SetMesh("meshes/monkey.w4a"s, "monkey"s);
+		player->SetMaterial("default");
 		player->Transform().translateWorld({ 0, 1, 0 });
 		player->Parent(playhead);
 
+		for (int i = 0; i < 5; ++i)
+		{
+			wall.push_back(make::sptr<Entity>(hub));
+			wall[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
+			wall[i]->SetMaterial("default"s);
+			wall[i]->Transform().translateWorld({ -1.5f + (i % 2) * 3, 0, 16.0f * (i + 1) });
+			wall[i]->Transform().setWorldScale({ 0.5f, 0.5f, 0.5f });
+			wall[i]->Material().setParam("baseColor"s, color::random());
+			wall[i]->Material().setParam("specColor"s, math::vec4{ 0,0,0,1 });
+			wall[i]->Parent(Render::getRoot());
+		}
 
 		Render::getRoot()->addChild(playhead);
 
-		auto light = make::sptr<PointLight>("light");
-		light->setWorldTranslation({ 0.f, 5.f, 2.f });
-		light->setDecayRate(core::LightDecayRate::None);
-		light->setIntensity(0.5);
-		playhead->addChild(light);
+		auto lightF = make::sptr<PointLight>("light");
+		lightF->setWorldTranslation({ 0.f, 5.f, 2.f });
+		lightF->setDecayRate(core::LightDecayRate::Linear);
+		lightF->setIntensity(0.5);
+		playhead->addChild(lightF);
+
+		auto lightB = make::sptr<PointLight>("light");
+		lightB->setWorldTranslation({ 0.f, 5.f, -3.f });
+		lightB->setDecayRate(core::LightDecayRate::None);
+		lightB->setIntensity(1);
+		playhead->addChild(lightB);
 
 		Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
 		Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, -1.0f));
@@ -83,7 +105,7 @@ public:
 			//		node->setEnabled(FALSE);
 			//	});
 
-		m_road.LoadMeshes("meshes/chunks.w4a", 1);
+		m_road.LoadMeshes("meshes/chunks.w4a"s, 1);
 		m_road.BuildMap(32, Render::getRoot());
 
 
@@ -92,11 +114,12 @@ public:
 
 		//m_gui.LoadImages("textures/gui/");
 
-		m_gui.BuildUI(ui, "ui/");
+		m_gui.BuildUI(ui, "ui/"s);
 
 		w4::event::Touch::Begin::subscribe(std::bind(&ColorRun::onTouchBegin, this, std::placeholders::_1));
 		w4::event::Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
 		w4::event::Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
+
 
 	}
 
@@ -159,6 +182,7 @@ private:
 	w4::sptr<gui::Label>m_currentColor;
 	Hub hub;
 	w4::sptr<Entity> player;
+	std::vector<w4::sptr<Entity>> wall;
 };
 
 W4_RUN(ColorRun)
