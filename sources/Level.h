@@ -13,14 +13,14 @@ public:
 	Level() = delete;
 	Level(const Level & other) = delete;
 	Level(Level && other) = default;
-	Level(const Hub & InHub, INDEX Number);
+	Level(Hub & InHub, INDEX Number);
 
 	void Update(FLOAT PlayheadPosition);
 
 	FLOAT GetLength() const { return this->Road->GetLength(); };
 
 private:
-	void CreateLevel1(const Hub & InHub);
+	void CreateLevel1(Hub & InHub);
 
 	std::vector<Entity> Entities {};
 	w4::sptr<Road> Road {};

@@ -14,6 +14,12 @@ void Entity::SetMesh(std::string filename, std::string model)
 void Entity::SetTexture(std::string filename)
 {
 	m_texture = hub.ResolveTexture(filename);
+	if (m_material == nullptr)
+	{
+		W4_LOG_ERROR("TEXTURE CAN BE ASSIGNED ONLY AFTER MATERIAL!");
+		return;
+	}
+	m_material->setTexture(w4::resources::TextureId::TEXTURE_0, m_texture);
 }
 
 void Entity::SetMaterial(std::string name)

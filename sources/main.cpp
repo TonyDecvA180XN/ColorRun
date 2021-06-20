@@ -101,7 +101,7 @@ public:
 		playhead->addChild(lightB);
 
 		Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
-		Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, -1.0f));
+		Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, 1.0f));
 		//Render::getPass(0)->getDirectionalLight()->enableShadows();
 		/*Render::getRoot()->traversalTyped<PointLight>([this](cref<PointLight> node)
 			{

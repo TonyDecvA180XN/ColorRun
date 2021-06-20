@@ -9,6 +9,7 @@ class Entity
 public:
 	Entity() = delete;
 	Entity(const Entity & other) = delete;
+	Entity(Entity && other) = default;
 	Entity(Hub & hub);
 
 	void SetMesh(std::string filename, std::string model);
