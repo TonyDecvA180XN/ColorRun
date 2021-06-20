@@ -22,6 +22,8 @@ public:
 
 	static constexpr FLOAT cChunkSize = 8.0f;
 
+	FLOAT GetLength();
+
 	void LoadMeshes(std::string path, SIZE chunk_variety);
 
 	void BuildMap(SIZE length, w4::sptr<w4::render::Node> root);

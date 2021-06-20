@@ -2,6 +2,7 @@
 
 #include <W4Framework.h>
 #include "Hub.h"
+#include "Type.h"
 
 class Entity
 {
@@ -16,9 +17,11 @@ public:
 
 	void SetMaterial(std::string name);
 
+	virtual void Update(FLOAT PlayheadPosition) {};
+
 	w4::render::Node & Transform();
 
-	w4::resources::MaterialInst & Material();
+	w4::sptr<w4::resources::MaterialInst> Material();
 
 	void Parent(w4::sptr<w4::render::Node> parent);
 

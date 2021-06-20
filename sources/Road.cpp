@@ -19,6 +19,11 @@ void Road::RoadChunk::Disable()
 	m_chunkMesh->setEnabled(FALSE);
 }
 
+FLOAT Road::GetLength()
+{
+	return cChunkSize * m_chunks.size();
+}
+
 void Road::LoadMeshes(std::string path, SIZE chunk_variety)
 {
 	m_chunkVariety = chunk_variety;

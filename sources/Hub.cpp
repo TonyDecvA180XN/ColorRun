@@ -1,6 +1,7 @@
 #include "Hub.h"
 
-void Hub::Init()
+Hub::Hub(w4::sptr<w4::render::Node> SceneRoot) :
+	SceneRoot(SceneRoot)
 {
 	m_materials["default"s] = w4::resources::Material::getDefault()->createInstance();
 	m_materials["lambert"s] = w4::resources::Material::getDefaultLambert()->createInstance();

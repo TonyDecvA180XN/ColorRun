@@ -3,7 +3,7 @@
 #include <string>
 #include "MathUtils.h"
 #include "DebugHelper.h"
-#include "Road.h"
+#include "Level.h"
 #include "GUIManager.h"
 #include "Hub.h"
 #include "Entity.h"
@@ -23,7 +23,14 @@ public:
 	void onStart() override
 	{
 		DebugHelper::buildGizmo();
-		hub.Init();
+		
+		hub = make::sptr<Hub>(Render::getRoot());
+
+		Levels.emplace_back(*hub, 1);
+
+
+		
+
 		auto cam = Render::getScreenCamera();
 		cam->setFov(60.0f);
 		cam->setWorldTranslation({ 0.0f, 5.0f, -10.0f });
@@ -61,23 +68,23 @@ public:
 		playhead = make::sptr<w4::render::Node>();
 		playhead->addChild(cam);
 
-		player = make::sptr<Entity>(hub);
+		player = make::sptr<Entity>(*hub);
 		player->SetMesh("meshes/monkey.w4a"s, "monkey"s);
 		player->SetMaterial("default");
 		player->Transform().translateWorld({ 0, 1, 0 });
 		player->Parent(playhead);
 
-		for (int i = 0; i < 5; ++i)
-		{
-			wall.push_back(make::sptr<Entity>(hub));
-			wall[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
-			wall[i]->SetMaterial("default"s);
-			wall[i]->Transform().translateWorld({ -1.5f + (i % 2) * 3, 0, 16.0f * (i + 1) });
-			wall[i]->Transform().setWorldScale({ 0.5f, 0.5f, 0.5f });
-			wall[i]->Material().setParam("baseColor"s, color::random());
-			wall[i]->Material().setParam("specColor"s, math::vec4{ 0,0,0,1 });
-			wall[i]->Parent(Render::getRoot());
-		}
+		//for (int i = 0; i < 5; ++i)
+		//{
+		//	wall.push_back(make::sptr<Entity>(hub));
+		//	wall[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
+		//	wall[i]->SetMaterial("default"s);
+		//	wall[i]->Transform().translateWorld({ -1.5f + (i % 2) * 3, 0, 16.0f * (i + 1) });
+		//	wall[i]->Transform().setWorldScale({ 0.5f, 0.5f, 0.5f });
+		//	wall[i]->Material().setParam("baseColor"s, color::random());
+		//	wall[i]->Material().setParam("specColor"s, math::vec4{ 0,0,0,1 });
+		//	wall[i]->Parent(Render::getRoot());
+		//}
 
 		Render::getRoot()->addChild(playhead);
 
@@ -105,8 +112,8 @@ public:
 			//		node->setEnabled(FALSE);
 			//	});
 
-		m_road.LoadMeshes("meshes/chunks.w4a"s, 1);
-		m_road.BuildMap(32, Render::getRoot());
+		//m_road.LoadMeshes("meshes/chunks.w4a"s, 1);
+		//m_road.BuildMap(32, Render::getRoot());
 
 
 
@@ -125,11 +132,15 @@ public:
 
 	void onUpdate(float dt) override
 	{
-		//camCenter->rotateWorld(Rotator(0, dt / 2, 0));
 		playhead->translateWorld({ 0, 0, 4 * dt });
-		m_road.Update(playhead->getWorldTranslation().z);
+		//m_road.Update(playhead->getWorldTranslation().z);
 		auto color = std::string("Color: ") + (m_buttons[0] ? "R" : "") + (m_buttons[1] ? "G" : "") + (m_buttons[2] ? "B" : "");
 		m_currentColor->setText(color);
+		//player->Material().setParam("baseColor", );
+		for (Level & Level : Levels)
+		{
+			Level.Update(playhead->getWorldTranslation().z);
+		}
 	}
 
 	void onTouchBegin(const event::Touch::Begin & evt)
@@ -139,9 +150,9 @@ public:
 			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
 		};
 		auto color = m_gui.Update(coords);
-		if (color.a)
+		if (color.a > 0)
 		{
-			player->Material().setParam("baseColor", color);
+			player->Material()->setParam("baseColor", color);
 		}
 	}
 
@@ -152,9 +163,9 @@ public:
 			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
 		};
 		auto color = m_gui.Update(coords);
-		if (color.a)
+		if (color.a > 0)
 		{
-			player->Material().setParam("baseColor", color);
+			player->Material()->setParam("baseColor", color);
 		}
 	}
 
@@ -165,9 +176,9 @@ public:
 			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
 		};
 		auto color = m_gui.Update(coords);
-		if (color.a)
+		if (color.a > 0)
 		{
-			player->Material().setParam("baseColor", color);
+			player->Material()->setParam("baseColor", color);
 		}
 		m_gui.Reset();
 	}
@@ -175,14 +186,13 @@ public:
 private:
 	w4::sptr<w4::render::Node> camCenter;
 	w4::sptr<w4::render::Node> playhead;
-	Road m_road;
 	GUIManager m_gui;
 
 	BOOL m_buttons[3];
 	w4::sptr<gui::Label>m_currentColor;
-	Hub hub;
+	sptr<Hub> hub;
 	w4::sptr<Entity> player;
-	std::vector<w4::sptr<Entity>> wall;
+	std::vector<Level> Levels {};
 };
 
 W4_RUN(ColorRun)
