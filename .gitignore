@@ -2,3 +2,5 @@
 .vs/
 _deploy/
 _cache/
+
+resources/AssetCreator.config
