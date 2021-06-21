@@ -1,6 +1,7 @@
 #pragma once
 
 #include "W4Framework.h"
+#include <optional>
 #include "Type.h"
 
 class GUIManager
@@ -10,7 +11,7 @@ public:
 
 	void BuildUI(w4::sptr<w4::gui::Widget> root, std::string path);
 
-	w4::math::vec4 Update(w4::math::vec2 cursor);
+	std::optional<w4::math::vec4> Update(w4::math::vec2 cursor);
 
 	void Reset();
 

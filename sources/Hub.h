@@ -21,7 +21,5 @@ public:
 private:
 	w4::sptr<w4::render::Node> SceneRoot {};
 
-	std::unordered_map<std::string, w4::sptr<w4::resources::Asset>> m_meshes{};
-	std::unordered_map<std::string, w4::sptr<w4::resources::Texture>> m_textures{};
-	std::unordered_map<std::string, w4::sptr<w4::resources::MaterialInst>> m_materials{};
+	std::unordered_map<std::string, w4::sptr<w4::resources::Material>> m_materials{};
 };

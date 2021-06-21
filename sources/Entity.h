@@ -18,9 +18,9 @@ public:
 
 	void SetMaterial(std::string name);
 
-	virtual void Update(FLOAT PlayheadPosition) {};
+	void Update(FLOAT PlayheadPosition) {};
 
-	w4::render::Node & Transform();
+	w4::sptr<w4::render::Node> Transform();
 
 	w4::sptr<w4::resources::MaterialInst> Material();
 

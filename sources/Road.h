@@ -14,7 +14,7 @@ private:
 
 		void Disable();
 	private:
-		INDEX m_varation;
+		INDEX m_variation;
 		w4::sptr<w4::render::Node> m_chunkMesh;
 	};
 

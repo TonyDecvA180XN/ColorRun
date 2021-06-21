@@ -6,6 +6,8 @@
 #include "Entity.h"
 #include "Obstacle.h"
 
+W4_USE_UNSTRICT_INTERFACE
+
 class Level
 {
 public:
@@ -15,7 +17,9 @@ public:
 	Level(Level && other) = default;
 	Level(Hub & InHub, INDEX Number);
 
-	void Update(FLOAT PlayheadPosition);
+	void Update(FLOAT DeltaTime);
+
+	void OnColorChanged(vec4 Color);
 
 	FLOAT GetLength() const { return this->Road->GetLength(); };
 
@@ -23,5 +27,7 @@ private:
 	void CreateLevel1(Hub & InHub);
 
 	std::vector<Entity> Entities {};
-	w4::sptr<Road> Road {};
+	sptr<Road> Road {};
+	sptr<Node> Playhead {};
+	sptr<Node> MainCharacter {};
 };

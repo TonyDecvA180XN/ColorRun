@@ -14,6 +14,7 @@ void Entity::SetMesh(std::string filename, std::string model)
 void Entity::SetTexture(std::string filename)
 {
 	m_texture = hub.ResolveTexture(filename);
+	//m_texture->setFiltering(w4::resources::Filtering::Level1);
 	if (m_material == nullptr)
 	{
 		W4_LOG_ERROR("TEXTURE CAN BE ASSIGNED ONLY AFTER MATERIAL!");
@@ -28,9 +29,9 @@ void Entity::SetMaterial(std::string name)
 	m_mesh->setMaterialInst(m_material);
 }
 
-w4::render::Node & Entity::Transform()
+w4::sptr<w4::render::Node> Entity::Transform()
 {
-	return *m_mesh;
+	return m_mesh;
 }
 
 w4::sptr<w4::resources::MaterialInst> Entity::Material()

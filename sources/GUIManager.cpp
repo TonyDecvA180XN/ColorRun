@@ -59,7 +59,7 @@ void GUIManager::BuildUI(w4::sptr<w4::gui::Widget> root, std::string path)
     m_combo.reset();
 }
 
-w4::math::vec4 GUIManager::Update(w4::math::vec2 cursor)
+std::optional<w4::math::vec4> GUIManager::Update(w4::math::vec2 cursor)
 {
     for (INDEX i = 0; i != 3; ++i)
     {
@@ -76,21 +76,17 @@ w4::math::vec4 GUIManager::Update(w4::math::vec2 cursor)
                 if (m_combo.all())
                 {
                     m_currentColor->setImage("ui/000.png");
-                    m_currentColor->setSize({ 100, 100 });
-
-                    return { 0, 0, 0, 1 };
+					return std::make_optional<w4::math::vec4>(0.f, 0.f, 0.f, 1.f);
                 }
-
                 else
                 {
                     m_currentColor->setImage("ui/" + m_combo.to_string() + ".png");
-                    m_currentColor->setSize({ 100, 100 });
-                    return { b2f(m_combo[2]), b2f(m_combo[1]), b2f(m_combo[0]), 1 };
+					return std::make_optional<w4::math::vec4>(b2f(m_combo[2]), b2f(m_combo[1]), b2f(m_combo[0]), 1.f);
                 }
             }
         }
     }
-    return { 0, 0, 0, 0 };
+    return std::nullopt;
 }
 
 void GUIManager::Reset()

@@ -3,10 +3,10 @@
 #include "MathUtils.h"
 
 Road::RoadChunk::RoadChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh) :
-	m_varation(variation),
+	m_variation(variation),
 	m_chunkMesh(chunk_mesh)
 {
-	m_chunkMesh->setEnabled(FALSE);
+	Disable();
 }
 
 void Road::RoadChunk::Enable()
@@ -43,13 +43,13 @@ void Road::LoadMeshes(std::string path, SIZE chunk_variety)
 		auto model = asset->getChild<w4::render::Mesh>(index);
 		model->rotateWorld(w4::math::Rotator(0, 180_deg, 0));
 		//static auto mat = w4::resources::Material::getDefaultBlinn()->createInstance();
-		static auto mat = w4::resources::Material::getDefaultLambert()->createInstance();
-		static auto tex = w4::resources::Texture::get("textures/road.png");
+		auto mat = w4::resources::Material::getDefaultLambert()->createInstance();
+		auto tex = w4::resources::Texture::get("textures/road.png");
 		tex->setFiltering(w4::resources::Filtering::Level1);
-		//mat->setTexture(w4::resources::TextureId::TEXTURE_0, tex);
+		mat->setTexture(w4::resources::TextureId::TEXTURE_0, tex);
 		//mat->setParam("baseColor", w4::math::vec4::cref{ 1.f, 0.f, 0.f, 1.f });
 		//mat->setParam("specColor", w4::math::vec4::cref{ 0.f, 0.f, 1.f, 1.f });
-		model->traversal([](w4::render::Node & node)
+		model->traversal([=](w4::render::Node & node)
 			{
 				if (node.is<w4::render::Mesh>())
 				{
