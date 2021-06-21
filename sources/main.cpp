@@ -1,10 +1,17 @@
-#include "W4Framework.h"
+#include <W4Framework.h>
+#include <functional>
+#include <string>
 #include "MathUtils.h"
 #include "DebugHelper.h"
 #include "Level.h"
 #include "GUIManager.h"
+#include "Hub.h"
+#include "Entity.h"
+#include "GameState.h"
 
 W4_USE_UNSTRICT_INTERFACE
+
+using namespace std::string_literals;
 
 class ColorRun : public IGame
 {
@@ -17,143 +24,159 @@ public:
 	void onStart() override
 	{
 		DebugHelper::buildGizmo();
-		auto cam = Render::getScreenCamera();
-		cam->setFov(60.0f);
-		cam->setWorldTranslation({ 0.0f, 5.0f, -10.0f });
-		cam->setWorldRotation(Rotator(22.5_deg, 0, 0.0f));
-		cam->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
-		//camCenter = make::sptr<w4::render::Node>();
-		//camCenter->setWorldTranslation({ 0, 5.0f, 0 });
-		//camCenter->addChild(cam);
-		//Render::getRoot()->addChild(camCenter);
+		
+		Hub = make::sptr<class Hub>(Render::getRoot());
 
-		auto skybox = Cubemap::fromImages({
-			resources::Image::get("textures/env/sky/px.png"),
-			resources::Image::get("textures/env/sky/nx.png"),
-			resources::Image::get("textures/env/sky/py.png"),
-			resources::Image::get("textures/env/sky/ny.png"),
-			resources::Image::get("textures/env/sky/pz.png"),
-			resources::Image::get("textures/env/sky/nz.png")
-			});
+		ChangeState(EGameState::GameStateMenu, 0);
+	}
 
-		cam->getSkybox()->setCubemap(skybox);
+	void ChangeState(EGameState NextState, INT64 Param)
+	{
+		// some event BS
+		static sptr<EventImpl<Touch::Begin, touchProxy>::Handle> HandlerBegin;
+		static sptr<EventImpl<Touch::Move, touchProxy>::Handle> HandlerMove;
+		static sptr<EventImpl<Touch::End, touchProxy>::Handle> HandlerEnd;
 
-
-		auto tex = w4::resources::Texture::get("textures/grass.jpg");
-		auto mat = Material::getDefaultLambert()->createInstance();
-		mat->setTexture(TextureId::TEXTURE_0, tex);
-		auto mesh = Mesh::create::plane({ 32, 32 }, TRUE);
-		mesh->setMaterialInst(mat);
-		mesh->setWorldScale({ 16,16,16 });
-		mesh->rotateWorld(Rotator(90_deg, 0, 0));
-		mesh->translateWorld({ 0, -0.1, 512 / 2 - 10 });
-		Render::getRoot()->addChild(mesh);
-
-		playhead = make::sptr<w4::render::Node>();
-		playhead->addChild(cam);
-
-		player = Asset::get("meshes/monkey.w4a")->getFirstRoot()->getChild<Mesh>("monkey");
-		player->translateWorld({ 0, 1, 0 });
-		playhead->addChild(player);
-
-		Render::getRoot()->addChild(playhead);
-
-		auto light = make::sptr<PointLight>("light");
-		light->setWorldTranslation({ 0.f, 5.f, 2.f });
-		light->setDecayRate(core::LightDecayRate::None);
-		light->setIntensity(0.5);
-		playhead->addChild(light);
-
-		Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
-		Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, -1.0f));
-		//Render::getPass(0)->getDirectionalLight()->enableShadows();
-		/*Render::getRoot()->traversalTyped<PointLight>([this](cref<PointLight> node)
-			{
-				node->setColor({ 1,1,0 });
-			});*/
-			//Render::getRoot()->traversalTyped<SpotLight>([this](cref<SpotLight> node)
-			//	{
-			//		node->setEnabled(FALSE);
-			//	});
-
-		m_level.LoadMeshes("meshes/chunks.w4a", 1);
-		m_level.BuildMap(32, Render::getRoot());
-
-
-
-		auto ui = createWidget<Widget>(nullptr, "RootUI");
-
-		//m_gui.LoadImages("textures/gui/");
-
-		m_gui.BuildUI(ui, "ui/");
-
-		w4::event::Touch::Begin::subscribe(std::bind(&ColorRun::onTouchBegin, this, std::placeholders::_1));
-		w4::event::Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
-		w4::event::Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
-
-		;
+		if (NextState == EGameState::GameStateNone)
+		{
+			// Invalid case
+			W4_LOG_ERROR("Switching to NoneState attempt.");
+			return;
+		}
+		else if (CurrentState == EGameState::GameStateNone && NextState == EGameState::GameStateMenu)
+		{
+			// Initial condition
+			W4_LOG_DEBUG("Initial menu opening.");
+			GUI.SetUIMenu();
+		}
+		else if (CurrentState == EGameState::GameStateMenu && NextState == EGameState::GameStateLevel)
+		{
+			// Launch level
+			W4_LOG_DEBUG("Launching level.");
+			GUI.SetUILevel();
+			CurrentLevel = make::uptr<Level>(*Hub, Param);
+			CurrentLevelNumber = Param;
+			HandlerBegin = Touch::Begin::subscribe(std::bind(&ColorRun::onTouchBegin, this, std::placeholders::_1));
+			HandlerMove = Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
+			HandlerEnd = Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
+		}
+		else if (CurrentState == EGameState::GameStateLevel && NextState == EGameState::GameStateResult)
+		{
+			// finish level and show result
+			W4_LOG_DEBUG("Finishing level.");
+			GUI.SetUIResult(CurrentLevelNumber, Param);
+			CurrentLevel = nullptr;
+			CurrentLevelNumber = 0;
+			HandlerBegin->unsubscribe();
+			HandlerMove->unsubscribe();
+			HandlerEnd->unsubscribe();
+		}
+		else if (CurrentState == EGameState::GameStateResult && NextState == EGameState::GameStateLevel)
+		{
+			// restart level
+			W4_LOG_DEBUG("Restarting level.");
+			GUI.SetUILevel();
+			CurrentLevel = nullptr;
+			CurrentLevel = make::uptr<Level>(*Hub, Param);
+			CurrentLevelNumber = Param;
+			HandlerBegin = Touch::Begin::subscribe(std::bind(&ColorRun::onTouchBegin, this, std::placeholders::_1));
+			HandlerMove = Touch::Move::subscribe(std::bind(&ColorRun::onTouchMove, this, std::placeholders::_1));
+			HandlerEnd = Touch::End::subscribe(std::bind(&ColorRun::onTouchEnd, this, std::placeholders::_1));
+		}
+		else if (CurrentState == EGameState::GameStateResult && NextState == EGameState::GameStateMenu)
+		{
+			// back to menu
+			W4_LOG_DEBUG("Back to menu.");
+			GUI.SetUIMenu();
+			CurrentLevel = nullptr;
+		}
+		
+		CurrentState = NextState;
 	}
 
 	void onUpdate(float dt) override
 	{
-		//camCenter->rotateWorld(Rotator(0, dt / 2, 0));
-		playhead->translateWorld({ 0, 0, 4 * dt });
-		m_level.Update(playhead->getWorldTranslation().z);
-		auto color = std::string("Color: ") + (m_buttons[0] ? "R" : "") + (m_buttons[1] ? "G" : "") + (m_buttons[2] ? "B" : "");
-		m_currentColor->setText(color);
+		ClockCounter += dt;
+		
+		EGameState NextState = EGameState::GameStateNone;
+		INDEX NextLevel = 0;
+		BOOL NeedStateSwitch = FALSE;
+		switch (CurrentState)
+		{
+			case EGameState::GameStateLevel:
+			{
+				NeedStateSwitch = CurrentLevel->Update(dt);
+				if (NeedStateSwitch)
+				{
+					NextState = EGameState::GameStateResult;
+				}
+				break;
+			}
+			case EGameState::GameStateMenu:
+			{
+				GUI.UpdateUIMenu();
+				NeedStateSwitch = GUI.RequestStateSwitch(NextState, NextLevel);
+				break;
+			}
+			case EGameState::GameStateResult:
+			{
+				GUI.UpdateUIResult();
+				NeedStateSwitch = GUI.RequestStateSwitch(NextState, NextLevel);
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+
+		if (NeedStateSwitch)
+		{
+			ChangeState(NextState, NextLevel);
+		}
+	}
+
+	void ProcessCombo(const point & InCursor, const BOOL InIsReleased)
+	{
+		vec2 coords
+		{
+			static_cast<FLOAT>(InCursor.x) / Platform::getSize().w,
+			static_cast<FLOAT>(InCursor.y) / Platform::getSize().h,
+		};
+
+		std::optional<vec4> UpdatedColor = GUI.UpdateUILevel(coords, InIsReleased);
+		if (UpdatedColor.has_value())
+		{
+			CurrentColor = UpdatedColor.value();
+			CurrentLevel->OnColorChanged(CurrentColor);
+		}
 	}
 
 	void onTouchBegin(const event::Touch::Begin & evt)
 	{
-		vec2 coords{
-			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
-			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
-		};
-		auto color = m_gui.Update(coords);
-		if (color.a)
-		{
-			player->getMaterialInst()->setParam("baseColor", color);
-		}
+		ProcessCombo(evt.point, FALSE);
 	}
 
 	void onTouchMove(const event::Touch::Move & evt)
 	{
-		vec2 coords{
-			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
-			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
-		};
-		auto color = m_gui.Update(coords);
-		if (color.a)
-		{
-			player->getMaterialInst()->setParam("baseColor", color);
-		}
+		ProcessCombo(evt.point, FALSE);
 	}
 
 	void onTouchEnd(const event::Touch::End & evt)
 	{
-		vec2 coords{
-			static_cast<FLOAT>(evt.point.x) / Platform::getSize().w,
-			static_cast<FLOAT>(evt.point.y) / Platform::getSize().h,
-		};
-		auto color = m_gui.Update(coords);
-		if (color.a)
-		{
-			player->getMaterialInst()->setParam("baseColor", color);
-		}
-		m_gui.Reset();
+		ProcessCombo(evt.point, TRUE);
 	}
 
 private:
-	w4::sptr<w4::render::Node> camCenter;
-	w4::sptr<w4::render::Node> playhead;
-	w4::sptr<w4::render::Mesh> player;
-	Level m_level;
-	GUIManager m_gui;
+	GUIManager GUI;
+	sptr<Hub> Hub;
 
-	BOOL m_buttons[3];
-	w4::sptr<gui::Label>m_currentColor;
-public:
-	w4::sptr<w4::gui::Button> m_redBtn, m_greenBtn, m_blueBtn;
+	FLOAT ClockCounter { 0.f };
+	EGameState CurrentState { EGameState::GameStateNone };
+	INDEX CurrentLevelNumber { 0 };
+	
+	uptr<Level> CurrentLevel { nullptr };
+	vec4 CurrentColor { 0.f, 0.f, 0.f, 0.f };
 };
 
 W4_RUN(ColorRun)

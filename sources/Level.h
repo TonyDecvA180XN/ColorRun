@@ -1,37 +1,38 @@
 #pragma once
 
 #include <W4Framework.h>
-
 #include "Type.h"
+#include "Road.h"
+#include "Entity.h"
+#include "Obstacle.h"
+
+W4_USE_UNSTRICT_INTERFACE
 
 class Level
 {
-private:
-	class LevelChunk {
-	public:
-		LevelChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mesh);
-
-		void Enable();
-
-		void Disable();
-	private:
-		INDEX m_varation;
-		w4::sptr<w4::render::Node> m_chunkMesh;
-	};
-
 public:
 
-	static constexpr FLOAT cChunkSize = 8.0f;
+	Level() = delete;
+	Level(const Level & other) = delete;
+	Level(Level && other) = default;
+	Level(Hub & InHub, INDEX Number);
+	~Level();
 
-	void LoadMeshes(std::string path, SIZE chunk_variety);
+	BOOL Update(FLOAT DeltaTime);
 
-	void BuildMap(SIZE length, w4::sptr<w4::render::Node> root);
+	void OnColorChanged(vec4 Color);
 
-	void Update(FLOAT playhead_z_position);
+	FLOAT GetLength() const { return this->Road->GetLength(); };
 
 private:
-	SIZE m_chunkVariety;
-	INDEX m_activeStart{ 0 }, m_activeFinish{ 0 };
-	std::vector<w4::sptr<w4::render::Mesh>> m_samples{};
-	std::vector<LevelChunk> m_chunks{};
+	void CreateLevel1(Hub & InHub);
+	//void CreateLevel2(Hub & InHub);
+	//void CreateLevel3(Hub & InHub);
+	//void CreateLevel4(Hub & InHub);
+	//void CreateLevel5(Hub & InHub);
+
+	std::vector<Entity> Entities {};
+	sptr<Road> Road {};
+	sptr<Node> Playhead {};
+	sptr<Node> MainCharacter {};
 };
