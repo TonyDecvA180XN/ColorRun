@@ -16,8 +16,9 @@ public:
 	Level(const Level & other) = delete;
 	Level(Level && other) = default;
 	Level(Hub & InHub, INDEX Number);
+	~Level();
 
-	void Update(FLOAT DeltaTime);
+	BOOL Update(FLOAT DeltaTime);
 
 	void OnColorChanged(vec4 Color);
 
@@ -25,6 +26,10 @@ public:
 
 private:
 	void CreateLevel1(Hub & InHub);
+	//void CreateLevel2(Hub & InHub);
+	//void CreateLevel3(Hub & InHub);
+	//void CreateLevel4(Hub & InHub);
+	//void CreateLevel5(Hub & InHub);
 
 	std::vector<Entity> Entities {};
 	sptr<Road> Road {};

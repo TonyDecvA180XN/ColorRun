@@ -13,6 +13,26 @@ Level::Level(Hub & InHub, INDEX Number) :
 			CreateLevel1(InHub);
 			break;
 		}
+		case 2:
+		{
+			CreateLevel1(InHub);
+			break;
+		}
+		case 3:
+		{
+			CreateLevel1(InHub);
+			break;
+		}
+		case 4:
+		{
+			CreateLevel1(InHub);
+			break;
+		}
+		case 5:
+		{
+			CreateLevel1(InHub);
+			break;
+		}
 		default:
 		{
 			break;
@@ -35,8 +55,8 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// tune camera
 	sptr<class Camera> Camera = Render::getScreenCamera();
 	Camera->setFov(60.0f);
-	Camera->setWorldTranslation({ 0.f, 5.f, -10.f });
-	Camera->setWorldRotation(Rotator(22.5_deg, 0, 0.0f));
+	Camera->setWorldTranslation({ 0.f, 4.f, -8.f });
+	Camera->setWorldRotation(Rotator(30_deg, 0, 0.0f));
 	Camera->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
@@ -81,9 +101,17 @@ Level::Level(Hub & InHub, INDEX Number) :
 	InHub.GetSceneRoot()->addChild(Floor);
 }
 
-void Level::Update(FLOAT DeltaTime)
+Level::~Level()
 {
-	constexpr FLOAT MovementSpeed = 4.f;
+	for (auto & child : Render::getRoot()->getAllChildren())
+	{
+		Render::getRoot()->removeChild(child->getName());
+	}
+}
+
+BOOL Level::Update(FLOAT DeltaTime)
+{
+	constexpr FLOAT MovementSpeed = 16.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
@@ -92,6 +120,7 @@ void Level::Update(FLOAT DeltaTime)
 	{
 		Entity.Update(PlayheadPosition);
 	}
+	return PlayheadPosition >= Road->GetLength();
 }
 
 void Level::OnColorChanged(vec4 Color)
