@@ -61,7 +61,12 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
 	// add main character
-	sptr<Collidable> Character = make::sptr<Collidable>(InHub);
+	Collidable::FCollider CharacterCollider;
+	CharacterCollider.Left = -1.f;
+	CharacterCollider.Right = 1.f;
+	CharacterCollider.Radius = 0.f;
+	CharacterCollider.ColliderType = Collidable::FCollider::EColliderType::Box;
+	sptr<Collidable> Character = make::sptr<Collidable>(InHub, CharacterCollider);
 	Character->SetMesh("meshes/monkey.w4a"s, "monkey"s);
 	Character->SetMaterial("default"s);
 	//Character->Material()->setParam("specColor", color(color::Black));
@@ -114,7 +119,7 @@ Level::~Level()
 
 BOOL Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 4.f;
+	constexpr FLOAT MovementSpeed = 16.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
@@ -188,7 +193,13 @@ void Level::CreateLevel1(Hub & InHub)
 
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
-		Entities.push_back(make::uptr<Collidable>(InHub));
+		Collidable::FCollider ObstacleCollider;
+		ObstacleCollider.Left = ObstaclePositions[i].x - 1.f;
+		ObstacleCollider.Right = ObstaclePositions[i].x + 1.f;
+		ObstacleCollider.Radius = 1.f;
+		ObstacleCollider.ColliderType = Collidable::FCollider::EColliderType::Box;
+
+		Entities.push_back(make::uptr<Collidable>(InHub, ObstacleCollider));
 		Entities[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
 		Entities[i]->SetMaterial("default"s);
 		Entities[i]->Material()->setParam("baseColor"s, ObstacleColors[i]);
