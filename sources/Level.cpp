@@ -61,20 +61,23 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
 	// add main character
-	sptr<Entity> Character = make::sptr<Entity>(InHub);
+	sptr<Collidable> Character = make::sptr<Collidable>(InHub);
 	Character->SetMesh("meshes/monkey.w4a"s, "monkey"s);
-	Character->SetMaterial("default");
+	Character->SetMaterial("default"s);
+	//Character->Material()->setParam("specColor", color(color::Black));
 	MainCharacter = Character->Transform();
 	MainCharacter->translateWorld({ 0.f, 1.f, 0.f });
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
 	FrontLight->setWorldTranslation({ 0.f, 5.f, 3.f });
+	FrontLight->setColor({ 1.f, 1.f, 1.f });
 	FrontLight->setDecayRate(core::LightDecayRate::Linear);
 	FrontLight->setIntensity(0.5f);
 
 	sptr<PointLight> BackLight = make::sptr<PointLight>("BackLight"s);
 	BackLight->setWorldTranslation({ 0.f, 5.f, -3.f });
+	BackLight->setColor({ 1.f, 1.f, 1.f });
 	BackLight->setDecayRate(core::LightDecayRate::Linear);
 	BackLight->setIntensity(0.5f);
 
@@ -111,14 +114,14 @@ Level::~Level()
 
 BOOL Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 16.f;
+	constexpr FLOAT MovementSpeed = 4.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
 	Road->Update(PlayheadPosition);
-	for (Entity & Entity : Entities)
+	for (sptr<Entity> Entity : Entities)
 	{
-		Entity.Update(PlayheadPosition);
+		Entity->Update(PlayheadPosition);
 	}
 	return PlayheadPosition >= Road->GetLength();
 }
@@ -151,6 +154,18 @@ void Level::CreateLevel1(Hub & InHub)
 		}
 	};
 
+	std::array<vec4, NumObstacles> ObstacleColors = 
+	{
+		{
+			{ 1.f, 0.f, 0.f, 1.f },
+			{ 0.f, 1.f, 0.f, 1.f },
+			{ 0.f, 0.f, 1.f, 1.f },
+			{ 0.f, 1.f, 1.f, 1.f },
+			{ 1.f, 0.f, 1.f, 1.f },
+			{ 1.f, 1.f, 0.f, 1.f },
+		}
+	};
+
 	//std::array<w4::math::vec3, NumClutterObjects> ClutterPositions =
 	//{
 	//	{
@@ -173,21 +188,22 @@ void Level::CreateLevel1(Hub & InHub)
 
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
-		Entities.emplace_back(InHub);
-		Entities.at(i).SetMesh("meshes/wall.w4a"s, "wall"s);
-		Entities.at(i).SetMaterial("lambert"s);
-		Entities.at(i).SetTexture("textures/wall.jpg"s);
-		Entities.at(i).Transform()->setWorldScale({ 0.5f, 1.f, 1.f });
-		Entities.at(i).Transform()->setWorldTranslation(ObstaclePositions.at(i));
+		Entities.push_back(make::uptr<Collidable>(InHub));
+		Entities[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
+		Entities[i]->SetMaterial("default"s);
+		Entities[i]->Material()->setParam("baseColor"s, ObstacleColors[i]);
+		//Entities[i]->Material()->setParam("specColor", color(color::Black));
+		Entities[i]->Transform()->setWorldScale({ 0.5f, 1.f, 1.f });
+		Entities[i]->Transform()->setWorldTranslation(ObstaclePositions[i]);
 	}
 	
 	//for (INDEX i = 0; i != NumClutterObjects; ++i)
 	//{
 	//	INDEX Offset = i + NumObstacles;
 	//	Entities.emplace_back(InHub);
-	//	Entities.at(Offset).SetMesh("meshes/wall.w4a"s, "wall"s);
-	//	Entities.at(Offset).SetMaterial("lambert"s);
-	//	Entities.at(Offset).SetTexture("textures/wall.jpg");
-	//	Entities.at(Offset).Transform().setWorldTranslation(ClutterPositions.at(i));
+	//	Entities[Offset].SetMesh("meshes/wall.w4a"s, "wall"s);
+	//	Entities[Offset].SetMaterial("lambert"s);
+	//	Entities[Offset].SetTexture("textures/wall.jpg");
+	//	Entities[Offset].Transform().setWorldTranslation(ClutterPositions[i]);
 	//}
 }

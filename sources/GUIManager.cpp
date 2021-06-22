@@ -132,7 +132,7 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, UINT64 Result)
 	Background->setVerticalAlign(VerticalAlign::Center);
 	Background->setSizePolicy(SizePolicy::Fixed, SizePolicy::Fixed);
 	Background->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 2) });
-	Background->setOpacity(0.5f);
+	Background->setOpacity(0.75f);
 
 	// create welcome text
 	sptr<Label> Title = createWidget<Label>(Root, "LEVEL COMPLETE");

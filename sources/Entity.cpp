@@ -1,7 +1,7 @@
 #include "Entity.h"
 
-Entity::Entity(Hub & hub) :
-	hub(hub)
+Entity::Entity(Hub & Hub) :
+	hub(Hub)
 {
 }
 

@@ -10,7 +10,10 @@ public:
 	Entity() = delete;
 	Entity(const Entity & other) = delete;
 	Entity(Entity && other) = default;
-	Entity(Hub & hub);
+	Entity(Hub & Hub);
+	Entity & operator=(const Entity & Other) = delete;
+	Entity & operator=(Entity && Other) = delete;
+	virtual ~Entity() = default;
 
 	void SetMesh(std::string filename, std::string model);
 
@@ -26,7 +29,6 @@ public:
 
 	void Parent(w4::sptr<w4::render::Node> parent);
 
-	virtual ~Entity() = default;;
 
 protected:
 	Hub & hub;
