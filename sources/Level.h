@@ -4,7 +4,7 @@
 #include "Type.h"
 #include "Road.h"
 #include "Entity.h"
-#include "Obstacle.h"
+#include "Collidable.h"
 
 W4_USE_UNSTRICT_INTERFACE
 
@@ -31,8 +31,8 @@ private:
 	//void CreateLevel4(Hub & InHub);
 	//void CreateLevel5(Hub & InHub);
 
-	std::vector<Entity> Entities {};
+	std::vector<sptr<Entity>> Entities {};
 	sptr<Road> Road {};
 	sptr<Node> Playhead {};
-	sptr<Node> MainCharacter {};
+	sptr<Collidable> MainCharacter {};
 };

@@ -1,19 +1,27 @@
 #include "Entity.h"
 
-Entity::Entity(Hub & hub) :
-	hub(hub)
+INDEX Entity::FreeId = 1;
+w4::sptr<Hub> Entity::hub = nullptr;
+
+Entity::Entity(Hub & InHub) :
+	Id(FreeId++)
 {
+	if (hub == nullptr)
+	{
+		hub = w4::sptr<Hub>(&InHub);
+	}
 }
 
 void Entity::SetMesh(std::string filename, std::string model)
 {
-	m_mesh = hub.ResolveMesh(filename, model);
-	hub.GetSceneRoot()->addChild(m_mesh);
+	hub->Register(w4::sptr<Entity>(this), filename + "#"s + model + "#"s + std::to_string(Id));
+	m_mesh = hub->ResolveMesh(Id, filename, model);
+	hub->GetSceneRoot()->addChild(m_mesh);
 }
 
 void Entity::SetTexture(std::string filename)
 {
-	m_texture = hub.ResolveTexture(filename);
+	m_texture = hub->ResolveTexture(filename);
 	//m_texture->setFiltering(w4::resources::Filtering::Level1);
 	if (m_material == nullptr)
 	{
@@ -25,7 +33,7 @@ void Entity::SetTexture(std::string filename)
 
 void Entity::SetMaterial(std::string name)
 {
-	m_material = hub.ResolveMaterial(name);
+	m_material = hub->ResolveMaterial(name);
 	m_mesh->setMaterialInst(m_material);
 }
 

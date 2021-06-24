@@ -10,7 +10,10 @@ public:
 	Entity() = delete;
 	Entity(const Entity & other) = delete;
 	Entity(Entity && other) = default;
-	Entity(Hub & hub);
+	Entity(Hub & InHub);
+	Entity & operator=(const Entity & Other) = delete;
+	Entity & operator=(Entity && Other) = delete;
+	virtual ~Entity() = default;
 
 	void SetMesh(std::string filename, std::string model);
 
@@ -18,7 +21,7 @@ public:
 
 	void SetMaterial(std::string name);
 
-	void Update(FLOAT PlayheadPosition) {};
+	virtual void Update(FLOAT PlayheadPosition) {};
 
 	w4::sptr<w4::render::Node> Transform();
 
@@ -26,12 +29,14 @@ public:
 
 	void Parent(w4::sptr<w4::render::Node> parent);
 
-	virtual ~Entity() = default;;
-
 protected:
-	Hub & hub;
+	static w4::sptr<Hub> hub;
+	INDEX Id { 0 };
 
 	w4::sptr<w4::render::Mesh> m_mesh {};
 	w4::sptr<w4::resources::Texture> m_texture {};
 	w4::sptr<w4::resources::MaterialInst> m_material {};
+
+private:
+	static INDEX FreeId;
 };
