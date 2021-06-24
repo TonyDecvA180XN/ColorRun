@@ -61,17 +61,12 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
 	// add main character
-	Collidable::FCollider CharacterCollider;
-	CharacterCollider.Left = -1.f;
-	CharacterCollider.Right = 1.f;
-	CharacterCollider.Radius = 0.f;
-	CharacterCollider.ColliderType = Collidable::FCollider::EColliderType::Box;
-	sptr<Collidable> Character = make::sptr<Collidable>(InHub, CharacterCollider);
-	Character->SetMesh("meshes/monkey.w4a"s, "monkey"s);
-	Character->SetMaterial("default"s);
+	MainCharacter = make::sptr<Collidable>(InHub, Collidable::EActorType::MainCharacter, Collidable::EActorState::Alive);
+	std::dynamic_pointer_cast<Collidable>(MainCharacter)->SetMesh("meshes/monkey.w4a"s, "monkey"s, 1.f);
+	MainCharacter->SetMaterial("default"s);
 	//Character->Material()->setParam("specColor", color(color::Black));
-	MainCharacter = Character->Transform();
-	MainCharacter->translateWorld({ 0.f, 1.f, 0.f });
+	MainCharacter->Transform()->translateWorld({ 0.f, 1.f, 0.f });
+	MainCharacter->SetColor({ 1.f, 1.f, 1.f, 1.f });
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
@@ -102,7 +97,7 @@ Level::Level(Hub & InHub, INDEX Number) :
 	
 	// link parents
 	Playhead->addChild(Camera);
-	Playhead->addChild(MainCharacter);
+	Playhead->addChild(MainCharacter->Transform());
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
@@ -119,7 +114,8 @@ Level::~Level()
 
 BOOL Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 16.f;
+	//W4_LOG_INFO(std::to_string(DeltaTime).c_str());
+	constexpr FLOAT MovementSpeed = 8.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
@@ -133,7 +129,7 @@ BOOL Level::Update(FLOAT DeltaTime)
 
 void Level::OnColorChanged(vec4 Color)
 {
-	MainCharacter->as<Mesh>()->getMaterialInst()->setParam("baseColor"s, Color);
+	MainCharacter->SetColor(Color);
 }
 
 void Level::CreateLevel1(Hub & InHub)
@@ -193,19 +189,13 @@ void Level::CreateLevel1(Hub & InHub)
 
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
-		Collidable::FCollider ObstacleCollider;
-		ObstacleCollider.Left = ObstaclePositions[i].x - 1.f;
-		ObstacleCollider.Right = ObstaclePositions[i].x + 1.f;
-		ObstacleCollider.Radius = 1.f;
-		ObstacleCollider.ColliderType = Collidable::FCollider::EColliderType::Box;
-
-		Entities.push_back(make::uptr<Collidable>(InHub, ObstacleCollider));
-		Entities[i]->SetMesh("meshes/wall.w4a"s, "wall"s);
-		Entities[i]->SetMaterial("default"s);
-		Entities[i]->Material()->setParam("baseColor"s, ObstacleColors[i]);
+		Entities.push_back(make::uptr<Collidable>(InHub, Collidable::EActorType::Obstacle));
+		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
+		Entities.back()->SetMaterial("default"s);
 		//Entities[i]->Material()->setParam("specColor", color(color::Black));
-		Entities[i]->Transform()->setWorldScale({ 0.5f, 1.f, 1.f });
-		Entities[i]->Transform()->setWorldTranslation(ObstaclePositions[i]);
+		//Entities.back()->Transform()->setWorldScale({ 0.5f, 1.f, 1.f });
+		Entities.back()->Transform()->setWorldTranslation(ObstaclePositions[i]);
+		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetColor(ObstacleColors[i]);
 	}
 	
 	//for (INDEX i = 0; i != NumClutterObjects; ++i)

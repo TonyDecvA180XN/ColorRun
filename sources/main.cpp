@@ -25,7 +25,7 @@ public:
 	{
 		DebugHelper::buildGizmo();
 		
-		Hub = make::sptr<class Hub>(Render::getRoot());
+		Hub = make::sptr<class Hub>(Render::getRoot(), ClockCounter);
 
 		ChangeState(EGameState::GameStateMenu, 0);
 	}
@@ -97,6 +97,7 @@ public:
 	void onUpdate(float dt) override
 	{
 		ClockCounter += dt;
+		Hub->Update(ClockCounter);
 		
 		EGameState NextState = EGameState::GameStateNone;
 		INDEX NextLevel = 0;

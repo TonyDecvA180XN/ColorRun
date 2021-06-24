@@ -34,5 +34,5 @@ private:
 	std::vector<sptr<Entity>> Entities {};
 	sptr<Road> Road {};
 	sptr<Node> Playhead {};
-	sptr<Node> MainCharacter {};
+	sptr<Collidable> MainCharacter {};
 };
