@@ -1,53 +1,53 @@
 #include "Entity.h"
 
 INDEX Entity::FreeId = 1;
-w4::sptr<Hub> Entity::hub = nullptr;
+w4::sptr<Hub> Entity::LinkToHub = nullptr;
 
 Entity::Entity(Hub & InHub) :
 	Id(FreeId++)
 {
-	if (hub == nullptr)
+	if (LinkToHub == nullptr)
 	{
-		hub = w4::sptr<Hub>(&InHub);
+		LinkToHub = w4::sptr<Hub>(&InHub);
 	}
 }
 
-void Entity::SetMesh(std::string filename, std::string model)
+void Entity::SetMesh(std::string Filename, std::string Model)
 {
-	hub->Register(w4::sptr<Entity>(this), filename + "#"s + model + "#"s + std::to_string(Id));
-	m_mesh = hub->ResolveMesh(Id, filename, model);
-	hub->GetSceneRoot()->addChild(m_mesh);
+	LinkToHub->Register(w4::sptr<Entity>(this), Filename + "#"s + Model + "#"s + std::to_string(Id));
+	Mesh = LinkToHub->ResolveMesh(Id, Filename, Model);
+	LinkToHub->GetSceneRoot()->addChild(Mesh);
 }
 
-void Entity::SetTexture(std::string filename)
+void Entity::SetTexture(std::string Filename)
 {
-	m_texture = hub->ResolveTexture(filename);
-	//m_texture->setFiltering(w4::resources::Filtering::Level1);
-	if (m_material == nullptr)
+	Texture = LinkToHub->ResolveTexture(Filename);
+	//Texture->setFiltering(w4::resources::Filtering::Level1);
+	if (Material == nullptr)
 	{
 		W4_LOG_ERROR("TEXTURE CAN BE ASSIGNED ONLY AFTER MATERIAL!");
 		return;
 	}
-	m_material->setTexture(w4::resources::TextureId::TEXTURE_0, m_texture);
+	Material->setTexture(w4::resources::TextureId::TEXTURE_0, Texture);
 }
 
-void Entity::SetMaterial(std::string name)
+void Entity::SetMaterial(std::string Name)
 {
-	m_material = hub->ResolveMaterial(name);
-	m_mesh->setMaterialInst(m_material);
+	Material = LinkToHub->ResolveMaterial(Name);
+	Mesh->setMaterialInst(Material);
 }
 
-w4::sptr<w4::render::Node> Entity::Transform()
+w4::sptr<w4::render::Node> Entity::GetNode()
 {
-	return m_mesh;
+	return Mesh;
 }
 
-w4::sptr<w4::resources::MaterialInst> Entity::Material()
+w4::sptr<w4::resources::MaterialInst> Entity::GetMaterial()
 {
-	return m_material;
+	return Material;
 }
 
-void Entity::Parent(w4::sptr<w4::render::Node> parent)
+void Entity::Parent(w4::sptr<w4::render::Node> Parent)
 {
-	parent->addChild(m_mesh);
+	Parent->addChild(Mesh);
 }

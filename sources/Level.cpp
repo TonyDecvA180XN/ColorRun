@@ -64,8 +64,7 @@ Level::Level(Hub & InHub, INDEX Number) :
 	MainCharacter = make::sptr<Collidable>(InHub, Collidable::EActorType::MainCharacter, Collidable::EActorState::Alive);
 	std::dynamic_pointer_cast<Collidable>(MainCharacter)->SetMesh("meshes/monkey.w4a"s, "monkey"s, 1.f);
 	MainCharacter->SetMaterial("default"s);
-	//Character->Material()->setParam("specColor", color(color::Black));
-	MainCharacter->Transform()->translateWorld({ 0.f, 1.f, 0.f });
+	MainCharacter->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
 	MainCharacter->SetColor({ 1.f, 1.f, 1.f, 1.f });
 
 	// create surround lights
@@ -97,7 +96,7 @@ Level::Level(Hub & InHub, INDEX Number) :
 	
 	// link parents
 	Playhead->addChild(Camera);
-	Playhead->addChild(MainCharacter->Transform());
+	Playhead->addChild(MainCharacter->GetNode());
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
@@ -114,7 +113,6 @@ Level::~Level()
 
 BOOL Level::Update(FLOAT DeltaTime)
 {
-	//W4_LOG_INFO(std::to_string(DeltaTime).c_str());
 	constexpr FLOAT MovementSpeed = 8.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
@@ -192,9 +190,7 @@ void Level::CreateLevel1(Hub & InHub)
 		Entities.push_back(make::uptr<Collidable>(InHub, Collidable::EActorType::Obstacle));
 		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
 		Entities.back()->SetMaterial("default"s);
-		//Entities[i]->Material()->setParam("specColor", color(color::Black));
-		//Entities.back()->Transform()->setWorldScale({ 0.5f, 1.f, 1.f });
-		Entities.back()->Transform()->setWorldTranslation(ObstaclePositions[i]);
+		Entities.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
 		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetColor(ObstacleColors[i]);
 	}
 	
@@ -205,6 +201,6 @@ void Level::CreateLevel1(Hub & InHub)
 	//	Entities[Offset].SetMesh("meshes/wall.w4a"s, "wall"s);
 	//	Entities[Offset].SetMaterial("lambert"s);
 	//	Entities[Offset].SetTexture("textures/wall.jpg");
-	//	Entities[Offset].Transform().setWorldTranslation(ClutterPositions[i]);
+	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
 	//}
 }

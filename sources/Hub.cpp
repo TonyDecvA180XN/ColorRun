@@ -3,36 +3,36 @@
 Hub::Hub(w4::sptr<w4::render::Node> SceneRoot, FLOAT Time) :
 	SceneRoot(SceneRoot), Clock(Time)
 {
-	m_materials["default"s] = w4::resources::Material::getDefault();
-	m_materials["lambert"s] = w4::resources::Material::getDefaultLambert();
-	m_materials["blinn"s] = w4::resources::Material::getDefaultBlinn();
+	Materials["default"s] = w4::resources::Material::getDefault();
+	Materials["lambert"s] = w4::resources::Material::getDefaultLambert();
+	Materials["blinn"s] = w4::resources::Material::getDefaultBlinn();
 }
 
-w4::sptr<w4::render::Mesh> Hub::ResolveMesh(INDEX CallerId, const std::string & filename, const std::string & subname)
+w4::sptr<w4::render::Mesh> Hub::ResolveMesh(INDEX CallerId, const std::string & Filename, const std::string & Model)
 {
-	w4::sptr<w4::resources::Asset> Asset = w4::resources::Asset::get(filename);
-	w4::sptr<w4::render::Node> Mesh = Asset->getFirstRoot()->getChild<w4::render::Mesh>(subname)->clone();
-	Mesh->setName(filename + "#"s + subname + "#"s + std::to_string(CallerId));
+	w4::sptr<w4::resources::Asset> Asset = w4::resources::Asset::get(Filename);
+	w4::sptr<w4::render::Node> Mesh = Asset->getFirstRoot()->getChild<w4::render::Mesh>(Model)->clone();
+	Mesh->setName(Filename + "#"s + Model + "#"s + std::to_string(CallerId));
 	return Mesh->as<w4::render::Mesh>();
 }
 
-w4::sptr<Entity> Hub::ResolveEntity(const std::string & fullname)
+w4::sptr<Entity> Hub::ResolveEntity(const std::string & Name)
 {
-	return m_entities[fullname];
+	return Entities[Name];
 }
 
-w4::sptr<w4::resources::Texture> Hub::ResolveTexture(const std::string & filename)
+w4::sptr<w4::resources::Texture> Hub::ResolveTexture(const std::string & Filename)
 {
-	return w4::resources::Texture::get(filename);
+	return w4::resources::Texture::get(Filename);
 }
 
-w4::sptr<w4::resources::MaterialInst> Hub::ResolveMaterial(const std::string & filename)
+w4::sptr<w4::resources::MaterialInst> Hub::ResolveMaterial(const std::string & Name)
 {
-	if (!m_materials.count(filename))
+	if (!Materials.count(Name))
 	{
-		W4_LOG_ERROR(("Unresolved material instance quiried: "s + filename).c_str());
+		W4_LOG_ERROR(("Unresolved material instance quiried: "s + Name).c_str());
 	}
-	return m_materials[filename]->createInstance();
+	return Materials[Name]->createInstance();
 }
 
 void Hub::Update(FLOAT Time)
@@ -40,7 +40,7 @@ void Hub::Update(FLOAT Time)
 	Clock = Time;
 }
 
-void Hub::Register(w4::sptr<Entity> InEntity, const std::string & fullname)
+void Hub::Register(w4::sptr<Entity> InEntity, const std::string & Name)
 {
-	m_entities[fullname] = InEntity;
+	Entities[Name] = InEntity;
 }

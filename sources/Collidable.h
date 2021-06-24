@@ -37,7 +37,7 @@ public:
 
 	void SetMesh(std::string filename, std::string model, FLOAT CollisionSize);
 
-	FLOAT GetPosition() const { return m_mesh->getWorldTranslation().z; }
+	FLOAT GetPosition() const { return Mesh->getWorldTranslation().z; }
 
 	w4::math::vec4 GetColor() const { return Color; }
 
@@ -47,7 +47,7 @@ public:
 
 private:
 
-	void SetUpdatedTime() { LastStateChangeTime = hub->GetClock(); }
+	void SetUpdatedTime() { LastStateChangeTime = LinkToHub->GetClock(); }
 
 	w4::sptr<w4::core::Collider> Collider { nullptr };
 	w4::math::vec4 Color = {};

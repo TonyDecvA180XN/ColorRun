@@ -15,27 +15,27 @@ public:
 	Entity & operator=(Entity && Other) = delete;
 	virtual ~Entity() = default;
 
-	void SetMesh(std::string filename, std::string model);
+	void SetMesh(std::string Filename, std::string Model);
 
-	void SetTexture(std::string filename);
+	void SetTexture(std::string Filename);
 
-	void SetMaterial(std::string name);
+	void SetMaterial(std::string Name);
 
 	virtual void Update(FLOAT PlayheadPosition) {};
 
-	w4::sptr<w4::render::Node> Transform();
+	w4::sptr<w4::render::Node> GetNode();
 
-	w4::sptr<w4::resources::MaterialInst> Material();
+	w4::sptr<w4::resources::MaterialInst> GetMaterial();
 
-	void Parent(w4::sptr<w4::render::Node> parent);
+	void Parent(w4::sptr<w4::render::Node> Parent);
 
 protected:
-	static w4::sptr<Hub> hub;
-	INDEX Id { 0 };
+	static w4::sptr<Hub> LinkToHub;
 
-	w4::sptr<w4::render::Mesh> m_mesh {};
-	w4::sptr<w4::resources::Texture> m_texture {};
-	w4::sptr<w4::resources::MaterialInst> m_material {};
+	INDEX Id { 0 };
+	w4::sptr<w4::render::Mesh> Mesh {};
+	w4::sptr<w4::resources::Texture> Texture {};
+	w4::sptr<w4::resources::MaterialInst> Material {};
 
 private:
 	static INDEX FreeId;
