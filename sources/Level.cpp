@@ -60,12 +60,17 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Camera->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
-	// add main character
-	MainCharacter = make::sptr<Collidable>(InHub, Collidable::EActorType::MainCharacter, Collidable::EActorState::Alive);
-	std::dynamic_pointer_cast<Collidable>(MainCharacter)->SetMesh("meshes/monkey.w4a"s, "monkey"s, 1.f);
-	MainCharacter->SetMaterial("default"s);
-	MainCharacter->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
-	MainCharacter->SetColor({ 1.f, 1.f, 1.f, 1.f });
+	// add start crowd
+	constexpr SIZE NumPawns = 3;
+	for (INDEX i = 0; i != NumPawns; ++i)
+	{
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive));
+		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.75f);
+		Pawns.back()->SetMaterial("default"s);
+		Pawns.back()->GetNode()->translateWorld({ -3.f + 3 * i, 1.f, 0.f + (i % 2) });
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		Pawns.back()->Parent(Playhead);
+	}
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
@@ -96,7 +101,6 @@ Level::Level(Hub & InHub, INDEX Number) :
 	
 	// link parents
 	Playhead->addChild(Camera);
-	Playhead->addChild(MainCharacter->GetNode());
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
@@ -118,16 +122,23 @@ BOOL Level::Update(FLOAT DeltaTime)
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
 	Road->Update(PlayheadPosition);
-	for (sptr<Entity> Entity : Entities)
+	for (sptr<Obstacle> Each : Obstacles)
 	{
-		Entity->Update(PlayheadPosition);
+		Each->Update(PlayheadPosition);
+	}
+	for (sptr<Pawn> Each : Pawns)
+	{
+		Each->Update(PlayheadPosition);
 	}
 	return PlayheadPosition >= Road->GetLength();
 }
 
 void Level::OnColorChanged(vec4 Color)
 {
-	MainCharacter->SetColor(Color);
+	for (sptr<Pawn> Each : Pawns)
+	{
+		Each->SetColor(Color);
+	}
 }
 
 void Level::CreateLevel1(Hub & InHub)
@@ -187,11 +198,11 @@ void Level::CreateLevel1(Hub & InHub)
 
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
-		Entities.push_back(make::uptr<Collidable>(InHub, Collidable::EActorType::Obstacle));
-		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
-		Entities.back()->SetMaterial("default"s);
-		Entities.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
-		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetColor(ObstacleColors[i]);
+		Obstacles.push_back(make::uptr<Obstacle>(InHub));
+		Obstacles.back()->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
+		Obstacles.back()->SetMaterial("default"s);
+		Obstacles.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
+		Obstacles.back()->SetColor(ObstacleColors[i]);
 	}
 	
 	//for (INDEX i = 0; i != NumClutterObjects; ++i)
