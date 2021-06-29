@@ -17,8 +17,8 @@ void Obstacle::Update(FLOAT PlayheadPosition)
 		case Collidable::EActorState::Ready:
 		{
 			Collider->setIntersecting(FALSE);
-			SetUniformScale(*this, 0.f);
-			SetElevation(*this, 0.f);
+			SetUniformScale(0.f);
+			SetElevation(0.f);
 			FLOAT ObstacleDistance = std::abs(GetPosition() - PlayheadPosition);
 			if (ObstacleDistance < SpawnDistance)
 			{
@@ -32,16 +32,16 @@ void Obstacle::Update(FLOAT PlayheadPosition)
 			FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
 			TimeElapsed = std::min(TimeElapsed, SpawnTime);
 			FLOAT Growth = TimeElapsed / SpawnTime;
-			SetUniformScale(*this, Growth);
+			SetUniformScale(Growth);
 			FLOAT Elevation = - 4.f * (Growth * Growth) + 3.f * Growth + 1.f;
-			SetElevation(*this, Elevation);
+			SetElevation(Elevation);
 				
 			if (LinkToHub->GetClock() >= LastStateChangeTime + SpawnTime)
 			{
 				ActorState = EActorState::Alive;
 				SetUpdatedTime();
-				SetUniformScale(*this, 1.f);
-				SetElevation(*this, 0.f);
+				SetUniformScale(1.f);
+				SetElevation(0.f);
 			}
 			break;
 		}
@@ -60,7 +60,7 @@ void Obstacle::Update(FLOAT PlayheadPosition)
 		{
 			Collider->setIntersecting(FALSE);
 			FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-			SetElevation(*this, TimeElapsed * 10.f);
+			SetElevation(TimeElapsed * 10.f);
 			if (TimeElapsed >= DespawnTime)
 			{
 				ActorState = EActorState::Dead;

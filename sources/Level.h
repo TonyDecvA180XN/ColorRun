@@ -18,7 +18,7 @@ public:
 	Level(Hub & InHub, INDEX Number);
 	~Level();
 
-	BOOL Update(FLOAT DeltaTime);
+	INT Update(FLOAT DeltaTime);
 
 	void OnColorChanged(vec4 Color);
 
@@ -30,6 +30,8 @@ private:
 	//void CreateLevel3(Hub & InHub);
 	//void CreateLevel4(Hub & InHub);
 	//void CreateLevel5(Hub & InHub);
+
+	vec3 GetFormationOffset(FLOAT GridStep, INDEX Index);
 
 	sptr<Road> Road {};
 	sptr<Node> Playhead {};

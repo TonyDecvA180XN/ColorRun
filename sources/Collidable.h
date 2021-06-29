@@ -37,7 +37,7 @@ public:
 
 	w4::math::vec4 GetColor() const { return Color; }
 
-	void SetColor(const w4::math::vec4 InColor);
+	virtual void SetColor(const w4::math::vec4 InColor);
 
 private:
 
@@ -50,9 +50,9 @@ protected:
 
 	void SetUpdatedTime() { LastStateChangeTime = LinkToHub->GetClock(); }
 
-	void SetUniformScale(Entity & OutEntity, FLOAT Scale);
+	void SetUniformScale(FLOAT Scale);
 
-	void SetElevation(Entity & OutEntity, FLOAT Elevation);
+	void SetElevation(FLOAT Elevation);
 
 	w4::sptr<w4::core::Collider> Collider { nullptr };
 	w4::math::vec4 Color = {};

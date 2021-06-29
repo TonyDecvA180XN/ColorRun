@@ -17,7 +17,7 @@ public:
 
 	void SetUILevel();
 	void SetUIMenu();
-	void SetUIResult(INDEX CurrentLevel, UINT64 Result);
+	void SetUIResult(INDEX CurrentLevel, INT Result);
 
 	std::optional<math::vec4> UpdateUILevel(vec2 cursor, const BOOL InIsReleased);
 	void UpdateUIMenu() {};

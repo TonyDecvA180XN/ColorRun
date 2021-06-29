@@ -153,16 +153,16 @@ void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4
 	}
 }
 
-void Collidable::SetUniformScale(Entity & OutEntity, FLOAT Scale)
+void Collidable::SetUniformScale(FLOAT Scale)
 {
-	OutEntity.GetNode()->setWorldScale({ Scale, Scale, Scale });
+	this->GetNode()->setWorldScale({ Scale, Scale, Scale });
 
 }
 
-void Collidable::SetElevation(Entity & OutEntity, FLOAT Elevation)
+void Collidable::SetElevation(FLOAT Elevation)
 {
-	w4::math::vec3 Position = OutEntity.GetNode()->getWorldTranslation();
+	w4::math::vec3 Position = this->GetNode()->getWorldTranslation();
 	Position.y = Elevation;
-	OutEntity.GetNode()->setWorldTranslation(Position);
+	this->GetNode()->setWorldTranslation(Position);
 }
 

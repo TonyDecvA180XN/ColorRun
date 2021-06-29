@@ -122,7 +122,7 @@ void GUIManager::SetUIMenu()
 	}
 }
 
-void GUIManager::SetUIResult(INDEX CurrentLevel, UINT64 Result)
+void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 {
 	Clear();
 
@@ -135,7 +135,8 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, UINT64 Result)
 	Background->setOpacity(0.75f);
 
 	// create welcome text
-	sptr<Label> Title = createWidget<Label>(Root, "LEVEL COMPLETE");
+	std::string ResultText = (Result > 0) ? "LEVEL COMPLETE"s : "GAME OVER"s;
+	sptr<Label> Title = createWidget<Label>(Root, ResultText);
 	Title->setHorizontalAlign(HorizontalAlign::Center);
 	Title->setVerticalAlign(VerticalAlign::Center);
 	Title->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
@@ -145,16 +146,19 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, UINT64 Result)
 	Title->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 	Title->setFontSize(72);
 
-	// create game inviting text
-	sptr<Label> Subtitle = createWidget<Label>(Root, utils::format("Your result: %d", Result));
-	Subtitle->setHorizontalAlign(HorizontalAlign::Center);
-	Subtitle->setVerticalAlign(VerticalAlign::Center);
-	Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
-	Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
-	//Subtitle->setSize({600, 150});
-	Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	Subtitle->setFontSize(48);
+	// create score text
+	if (Result > 0)
+	{
+		sptr<Label> Subtitle = createWidget<Label>(Root, utils::format("Your result: %d", Result));
+		Subtitle->setHorizontalAlign(HorizontalAlign::Center);
+		Subtitle->setVerticalAlign(VerticalAlign::Center);
+		Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+		Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+		Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
+		//Subtitle->setSize({600, 150});
+		Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
+		Subtitle->setFontSize(48);
+	}
 
 	// replay button
 	sptr<Button> ReplayButton = createWidget<class Button>(Root, utils::format("Replay Level %d", CurrentLevel).c_str());

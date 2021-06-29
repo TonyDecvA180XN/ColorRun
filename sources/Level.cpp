@@ -55,22 +55,10 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// tune camera
 	sptr<class Camera> Camera = Render::getScreenCamera();
 	Camera->setFov(60.0f);
-	Camera->setWorldTranslation({ 0.f, 4.f, -8.f });
+	Camera->setWorldTranslation({ 0.f, 5.f, -10.f });
 	Camera->setWorldRotation(Rotator(30_deg, 0, 0.0f));
 	Camera->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
-
-	// add start crowd
-	constexpr SIZE NumPawns = 3;
-	for (INDEX i = 0; i != NumPawns; ++i)
-	{
-		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive));
-		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.75f);
-		Pawns.back()->SetMaterial("default"s);
-		Pawns.back()->GetNode()->translateWorld({ -3.f + 3 * i, 1.f, 0.f + (i % 2) });
-		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
-		Pawns.back()->Parent(Playhead);
-	}
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
@@ -115,7 +103,7 @@ Level::~Level()
 	}
 }
 
-BOOL Level::Update(FLOAT DeltaTime)
+INT Level::Update(FLOAT DeltaTime)
 {
 	constexpr FLOAT MovementSpeed = 8.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
@@ -128,9 +116,22 @@ BOOL Level::Update(FLOAT DeltaTime)
 	}
 	for (sptr<Pawn> Each : Pawns)
 	{
-		Each->Update(PlayheadPosition);
+		Each->Update(PlayheadPosition, Playhead);
 	}
-	return PlayheadPosition >= Road->GetLength();
+	for (auto Each = Pawns.begin(); Each != Pawns.end();)
+	{
+		if ((*Each)->IsDead())
+			Each = Pawns.erase(Each);
+		else
+			++Each;
+	}
+	
+	if (Pawns.size() == 0)
+		return -1;
+	if (PlayheadPosition >= Road->GetLength())
+		return Pawns.size();
+	return 0;
+
 }
 
 void Level::OnColorChanged(vec4 Color)
@@ -150,7 +151,11 @@ void Level::CreateLevel1(Hub & InHub)
 	Road->BuildMap(NumRoadChunks, InHub.GetSceneRoot());
 	
 	constexpr SIZE NumObstacles = 6;
-	//constexpr SIZE NumClutterObjects = 12;
+	constexpr SIZE NumClutterObjects = 12;
+	constexpr SIZE NumPawnsLocal = 6; // initial crowd
+	constexpr SIZE NumPawnsGlobal = 3; // spread across level
+
+
 
 	std::array<w4::math::vec3, NumObstacles> ObstaclePositions =
 	{
@@ -160,7 +165,7 @@ void Level::CreateLevel1(Hub & InHub)
 			{ +3.f, 0.f, 8 * 8.f },
 			{ +0.f, 0.f, 10 * 8.f },
 			{ +0.f, 0.f, 11 * 8.f },
-			{ -3.f, 0.f, 15 * 8.f }
+			{ -3.f, 0.f, 13 * 8.f }
 		}
 	};
 
@@ -173,6 +178,15 @@ void Level::CreateLevel1(Hub & InHub)
 			{ 0.f, 1.f, 1.f, 1.f },
 			{ 1.f, 0.f, 1.f, 1.f },
 			{ 1.f, 1.f, 0.f, 1.f },
+		}
+	};
+
+	std::array<w4::math::vec3, NumPawnsGlobal> PawnPositions =
+	{
+		{
+			{ +3.f, 0.f, 4 * 8.f },
+			{ +0.f, 0.f, 5 * 8.f },
+			{ -3.f, 0.f, 8 * 8.f },
 		}
 	};
 
@@ -195,7 +209,7 @@ void Level::CreateLevel1(Hub & InHub)
 	//	}
 	//};
 	
-
+	// add obstacles
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
 		Obstacles.push_back(make::uptr<Obstacle>(InHub));
@@ -203,6 +217,30 @@ void Level::CreateLevel1(Hub & InHub)
 		Obstacles.back()->SetMaterial("default"s);
 		Obstacles.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
 		Obstacles.back()->SetColor(ObstacleColors[i]);
+	}
+
+	// add initial crowd
+	for (INDEX i = 0; i != NumPawnsLocal; ++i)
+	{
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive));
+		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Pawns.back()->SetMaterial("default"s);
+		Pawns.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
+		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		Pawns.back()->Parent(Playhead);
+	}
+
+	// add crowd recruits
+	for (INDEX i = 0; i != NumPawnsGlobal; ++i)
+	{
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Ready));
+		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Pawns.back()->SetMaterial("default"s);
+		Pawns.back()->GetNode()->translateWorld(PawnPositions[i]);
+		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		//Pawns.back()->Parent(Playhead);
 	}
 	
 	//for (INDEX i = 0; i != NumClutterObjects; ++i)
@@ -214,4 +252,14 @@ void Level::CreateLevel1(Hub & InHub)
 	//	Entities[Offset].SetTexture("textures/wall.jpg");
 	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
 	//}
+}
+
+vec3 Level::GetFormationOffset(FLOAT GridStep, INDEX Index)
+{
+	INDEX Row = static_cast<INDEX>(((std::sqrtf(8 * Index + 1) - 1.f) / 2));
+	INDEX RowStart = (Row * (Row + 1)) / 2;
+	INDEX Column = Index - RowStart;
+	
+	FLOAT RowLength = 2 * GridStep * Row;
+	return { -RowLength / 2 + 2 * GridStep * Column, 0.f, -GridStep * Row  };
 }
