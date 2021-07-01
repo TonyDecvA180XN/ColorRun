@@ -136,6 +136,7 @@ INT Level::Update(FLOAT DeltaTime)
 
 void Level::OnColorChanged(vec4 Color)
 {
+	Pawn::CrowdColor = Color;
 	for (sptr<Pawn> Each : Pawns)
 	{
 		Each->SetColor(Color);

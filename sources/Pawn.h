@@ -19,4 +19,6 @@ public:
 	void Update(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead);
 	
 	void SetColor(const w4::math::vec4 InColor) override;
+
+	static w4::math::vec4 CrowdColor;
 };

@@ -1,5 +1,7 @@
 #include "Pawn.h"
 
+w4::math::vec4 Pawn::CrowdColor = { 1.f, 1.f, 1.f, 1.f };
+
 Pawn::Pawn(Hub & InHub, EActorState InActorState) :
 	Collidable(InHub, InActorState)
 {
@@ -51,6 +53,7 @@ void Pawn::Update(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead)
 				SetUniformScale(1.f);
 				SetElevation(1.f);
 				Parent(Playhead);
+				SetColor(CrowdColor);
 				//GetNode()->translateWorld(GetFormationOffset(2.f, i));
 				//GetNode()->translateWorld({ 0.f, 1.f, 0.f });
 			}
