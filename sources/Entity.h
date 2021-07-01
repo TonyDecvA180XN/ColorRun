@@ -17,6 +17,8 @@ public:
 
 	void SetMesh(std::string Filename, std::string Model);
 
+	void SetMesh(w4::sptr<w4::render::Mesh> InMesh);
+
 	void SetTexture(std::string Filename);
 
 	void SetMaterial(std::string Name);

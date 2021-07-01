@@ -80,19 +80,20 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// add floor
 	constexpr SIZE FloorTilingFactor = 16;
 	constexpr FLOAT FloorSizeAbsolute = 256.f;
-	sptr<Mesh> Floor = Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE);
-	Floor->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
-	Floor->setWorldRotation(Rotator(90_deg, 0, 0));
-	Floor->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
-	Floor->setMaterialInst(InHub.ResolveMaterial("lambert"s));
-	Floor->getMaterialInst()->setTexture(TextureId::TEXTURE_0, InHub.ResolveTexture("textures/grass.jpg"s));
+	sptr<Entity> Floor = make::uptr<Entity>(InHub);
+	Floor->SetMesh(Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE));
+	Floor->GetNode()->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
+	Floor->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
+	Floor->GetNode()->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
+	Floor->SetMaterial("lambert"s);
+	Floor->SetTexture("textures/grass.jpg"s);
 	
 	// link parents
 	Playhead->addChild(Camera);
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
-	InHub.GetSceneRoot()->addChild(Floor);
+	//InHub.GetSceneRoot()->addChild(Floor);
 }
 
 Level::~Level()
@@ -105,7 +106,7 @@ Level::~Level()
 
 INT Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 8.f;
+	constexpr FLOAT MovementSpeed = 16.f;
 	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
@@ -124,6 +125,10 @@ INT Level::Update(FLOAT DeltaTime)
 			Each = Pawns.erase(Each);
 		else
 			++Each;
+	}
+	for (sptr<Enemy> Each : Enemies)
+	{
+		Each->Update(PlayheadPosition);
 	}
 	
 	if (Pawns.size() == 0)
@@ -253,6 +258,27 @@ void Level::CreateLevel1(Hub & InHub)
 	//	Entities[Offset].SetTexture("textures/wall.jpg");
 	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
 	//}
+
+	// create battle field
+	sptr<Entity> BattleField = make::uptr<Entity>(InHub);
+	BattleField->SetMesh(Mesh::create::plane({ 20.f, 20.f }));
+	BattleField->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
+	BattleField->GetNode()->translateWorld({ 0, 0.f, Road->GetLength() + 5.f });
+	BattleField->SetMaterial("lambert"s);
+	BattleField->SetTexture("textures/wall.jpg"s);
+
+	constexpr SIZE NumEnemies = 4;
+
+	for (INDEX i = 0; i != NumEnemies; ++i)
+	{
+		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Ready));
+		Enemies.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Enemies.back()->SetMaterial("default"s);
+		Enemies.back()->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+		Enemies.back()->GetNode()->rotateWorld(Rotator(0, 180_deg, 0));
+		Enemies.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
+		Enemies.back()->GetNode()->translateWorld({ 0.f, 1.f, Road->GetLength() + 5.f });
+	}
 }
 
 vec3 Level::GetFormationOffset(FLOAT GridStep, INDEX Index)

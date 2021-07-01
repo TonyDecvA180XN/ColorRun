@@ -19,6 +19,12 @@ void Entity::SetMesh(std::string Filename, std::string Model)
 	LinkToHub->GetSceneRoot()->addChild(Mesh);
 }
 
+void Entity::SetMesh(w4::sptr<w4::render::Mesh> InMesh)
+{
+	Mesh = InMesh;
+	LinkToHub->GetSceneRoot()->addChild(Mesh);
+}
+
 void Entity::SetTexture(std::string Filename)
 {
 	Texture = LinkToHub->ResolveTexture(Filename);

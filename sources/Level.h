@@ -5,6 +5,7 @@
 #include "Road.h"
 #include "Obstacle.h"
 #include "Pawn.h"
+#include "Enemy.h"
 
 W4_USE_UNSTRICT_INTERFACE
 
@@ -37,4 +38,5 @@ private:
 	sptr<Node> Playhead {};
 	std::vector<sptr<Obstacle>> Obstacles {};
 	std::vector<sptr<Pawn>> Pawns {};
+	std::vector<sptr<Enemy>> Enemies {};
 };
