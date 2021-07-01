@@ -30,7 +30,7 @@ public:
 		ChangeState(EGameState::GameStateMenu, 0);
 	}
 
-	void ChangeState(EGameState NextState, INT64 Param)
+	void ChangeState(EGameState NextState, INT Param)
 	{
 		// some event BS
 		static sptr<EventImpl<Touch::Begin, touchProxy>::Handle> HandlerBegin;
@@ -106,7 +106,8 @@ public:
 		{
 			case EGameState::GameStateLevel:
 			{
-				NeedStateSwitch = CurrentLevel->Update(dt);
+				NextLevel = CurrentLevel->Update(dt);
+				NeedStateSwitch = NextLevel != 0;
 				if (NeedStateSwitch)
 				{
 					NextState = EGameState::GameStateResult;

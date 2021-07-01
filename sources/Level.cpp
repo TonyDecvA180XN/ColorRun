@@ -3,7 +3,8 @@
 #include "MathUtils.h"
 
 Level::Level(Hub & InHub, INDEX Number) :
-	Playhead(make::sptr<Node>())
+	Playhead(make::sptr<Node>()),
+	LevelState(ELevelState::Run)
 {
 	// setup level
 	switch (Number)
@@ -55,17 +56,10 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// tune camera
 	sptr<class Camera> Camera = Render::getScreenCamera();
 	Camera->setFov(60.0f);
-	Camera->setWorldTranslation({ 0.f, 4.f, -8.f });
+	Camera->setWorldTranslation({ 0.f, 5.f, -10.f });
 	Camera->setWorldRotation(Rotator(30_deg, 0, 0.0f));
 	Camera->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
-
-	// add main character
-	MainCharacter = make::sptr<Collidable>(InHub, Collidable::EActorType::MainCharacter, Collidable::EActorState::Alive);
-	std::dynamic_pointer_cast<Collidable>(MainCharacter)->SetMesh("meshes/monkey.w4a"s, "monkey"s, 1.f);
-	MainCharacter->SetMaterial("default"s);
-	MainCharacter->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
-	MainCharacter->SetColor({ 1.f, 1.f, 1.f, 1.f });
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
@@ -87,20 +81,20 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// add floor
 	constexpr SIZE FloorTilingFactor = 16;
 	constexpr FLOAT FloorSizeAbsolute = 256.f;
-	sptr<Mesh> Floor = Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE);
-	Floor->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
-	Floor->setWorldRotation(Rotator(90_deg, 0, 0));
-	Floor->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
-	Floor->setMaterialInst(InHub.ResolveMaterial("lambert"s));
-	Floor->getMaterialInst()->setTexture(TextureId::TEXTURE_0, InHub.ResolveTexture("textures/grass.jpg"s));
+	sptr<Entity> Floor = make::uptr<Entity>(InHub);
+	Floor->SetMesh(Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE));
+	Floor->GetNode()->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
+	Floor->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
+	Floor->GetNode()->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
+	Floor->SetMaterial("lambert"s);
+	Floor->SetTexture("textures/grass.jpg"s);
 	
 	// link parents
 	Playhead->addChild(Camera);
-	Playhead->addChild(MainCharacter->GetNode());
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
-	InHub.GetSceneRoot()->addChild(Floor);
+	//InHub.GetSceneRoot()->addChild(Floor);
 }
 
 Level::~Level()
@@ -111,23 +105,115 @@ Level::~Level()
 	}
 }
 
-BOOL Level::Update(FLOAT DeltaTime)
+INT Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 8.f;
-	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
-
-	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
-	Road->Update(PlayheadPosition);
-	for (sptr<Entity> Entity : Entities)
+	if (LevelState == ELevelState::Run)
 	{
-		Entity->Update(PlayheadPosition);
+		constexpr FLOAT MovementSpeed = 8.f;
+		Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
+
+		FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
+		Road->Update(PlayheadPosition);
+		for (sptr<Obstacle> Each : Obstacles)
+		{
+			Each->Update(PlayheadPosition);
+		}
+		for (sptr<Pawn> Each : Pawns)
+		{
+			Each->UpdateRun(PlayheadPosition, Playhead);
+		}
+		for (auto Each = Pawns.begin(); Each != Pawns.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Pawns.erase(Each);
+			else
+				++Each;
+		}
+		for (sptr<Enemy> Each : Enemies)
+		{
+			Each->UpdateRun(PlayheadPosition);
+		}
+		
+		if (PlayheadPosition >= Road->GetLength())
+		{
+			LevelState = ELevelState::Battle;
+		}
+		if (Pawns.empty())
+			return -1;
 	}
-	return PlayheadPosition >= Road->GetLength();
+	else if (LevelState == ELevelState::Battle)
+	{
+		for (sptr<Pawn> Each : Pawns)
+		{
+			vec3 ClosestEnemyPosition;
+			FLOAT ClosestEnemyDistance = INF;
+			
+			for (sptr<Enemy> Opponent : Enemies)
+			{
+				if (!Opponent->IsDead())
+				{
+					FLOAT EnemyDistance = (Each->GetNode()->getWorldTranslation() - Opponent->GetNode()->getWorldTranslation()).length();
+					if (EnemyDistance < ClosestEnemyDistance)
+					{
+						ClosestEnemyDistance = EnemyDistance;
+						ClosestEnemyPosition = Opponent->GetNode()->getWorldTranslation();
+					}
+				}
+			}
+			Each->UpdateBattle(ClosestEnemyPosition);
+		}
+		for (sptr<Enemy> Each : Enemies)
+		{
+			vec3 ClosestEnemyPosition;
+			FLOAT ClosestEnemyDistance = INF;
+			
+			for (sptr<Pawn> Opponent : Pawns)
+			{
+				if (!Opponent->IsDead())
+				{
+					FLOAT EnemyDistance = (Each->GetNode()->getWorldTranslation() - Opponent->GetNode()->getWorldTranslation()).length();
+					if (EnemyDistance < ClosestEnemyDistance)
+					{
+						ClosestEnemyDistance = EnemyDistance;
+						ClosestEnemyPosition = Opponent->GetNode()->getWorldTranslation();
+					}
+				}
+			}
+
+			Each->UpdateBattle(ClosestEnemyPosition);
+		}
+
+		for (auto Each = Pawns.begin(); Each != Pawns.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Pawns.erase(Each);
+			else
+				++Each;
+		}
+		for (auto Each = Enemies.begin(); Each != Enemies.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Enemies.erase(Each);
+			else
+				++Each;
+		}
+
+		if (Pawns.empty())
+			return -1;
+		if (Enemies.empty())
+			return Pawns.size();
+	}
+	
+	return 0;
 }
 
 void Level::OnColorChanged(vec4 Color)
 {
-	MainCharacter->SetColor(Color);
+	Pawn::CrowdColor = Color;
+	for (sptr<Pawn> Each : Pawns)
+	{
+		Each->SetColor(Color);
+	}
 }
 
 void Level::CreateLevel1(Hub & InHub)
@@ -139,7 +225,11 @@ void Level::CreateLevel1(Hub & InHub)
 	Road->BuildMap(NumRoadChunks, InHub.GetSceneRoot());
 	
 	constexpr SIZE NumObstacles = 6;
-	//constexpr SIZE NumClutterObjects = 12;
+	constexpr SIZE NumClutterObjects = 12;
+	constexpr SIZE NumPawnsLocal = 6; // initial crowd
+	constexpr SIZE NumPawnsGlobal = 3; // spread across level
+
+
 
 	std::array<w4::math::vec3, NumObstacles> ObstaclePositions =
 	{
@@ -149,7 +239,7 @@ void Level::CreateLevel1(Hub & InHub)
 			{ +3.f, 0.f, 8 * 8.f },
 			{ +0.f, 0.f, 10 * 8.f },
 			{ +0.f, 0.f, 11 * 8.f },
-			{ -3.f, 0.f, 15 * 8.f }
+			{ -3.f, 0.f, 13 * 8.f }
 		}
 	};
 
@@ -162,6 +252,15 @@ void Level::CreateLevel1(Hub & InHub)
 			{ 0.f, 1.f, 1.f, 1.f },
 			{ 1.f, 0.f, 1.f, 1.f },
 			{ 1.f, 1.f, 0.f, 1.f },
+		}
+	};
+
+	std::array<w4::math::vec3, NumPawnsGlobal> PawnPositions =
+	{
+		{
+			{ +3.f, 0.f, 4 * 8.f },
+			{ +0.f, 0.f, 5 * 8.f },
+			{ -3.f, 0.f, 8 * 8.f },
 		}
 	};
 
@@ -184,14 +283,41 @@ void Level::CreateLevel1(Hub & InHub)
 	//	}
 	//};
 	
-
+	// add obstacles
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
-		Entities.push_back(make::uptr<Collidable>(InHub, Collidable::EActorType::Obstacle));
-		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
-		Entities.back()->SetMaterial("default"s);
-		Entities.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
-		std::dynamic_pointer_cast<Collidable>(Entities.back())->SetColor(ObstacleColors[i]);
+		Obstacles.push_back(make::uptr<Obstacle>(InHub));
+		Obstacles.back()->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
+		Obstacles.back()->SetMaterial("default"s);
+		Obstacles.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
+		Obstacles.back()->SetColor(ObstacleColors[i]);
+	}
+
+	// add initial crowd
+	for (INDEX i = 0; i != NumPawnsLocal; ++i)
+	{
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive));
+		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Pawns.back()->SetMaterial("default"s);
+		Pawns.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
+		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->GetNode()->setWorldRotation(Rotator());
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		Pawns.back()->Parent(Playhead);
+	}
+
+	// add crowd recruits
+	for (INDEX i = 0; i != NumPawnsGlobal; ++i)
+	{
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Ready));
+		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Pawns.back()->SetMaterial("default"s);
+		Pawns.back()->GetNode()->translateWorld(PawnPositions[i]);
+		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->GetNode()->setWorldRotation(Rotator());
+
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		//Pawns.back()->Parent(Playhead);
 	}
 	
 	//for (INDEX i = 0; i != NumClutterObjects; ++i)
@@ -203,4 +329,37 @@ void Level::CreateLevel1(Hub & InHub)
 	//	Entities[Offset].SetTexture("textures/wall.jpg");
 	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
 	//}
+
+	// create battle field
+	sptr<Entity> BattleField = make::uptr<Entity>(InHub);
+	BattleField->SetMesh(Mesh::create::plane({ 20.f, 15.f }));
+	BattleField->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
+	BattleField->GetNode()->translateWorld({ 0, 0.1f, Road->GetLength() + 5.f });
+	BattleField->SetMaterial("lambert"s);
+	BattleField->SetTexture("textures/wall.jpg"s);
+
+	constexpr SIZE NumEnemies = 4;
+	
+	// add enemy side army
+	for (INDEX i = 0; i != NumEnemies; ++i)
+	{
+		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Alive));
+		Enemies.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
+		Enemies.back()->SetMaterial("default"s);
+		Enemies.back()->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+		Enemies.back()->GetNode()->setWorldRotation(Rotator());
+		Enemies.back()->GetNode()->rotateWorld(Rotator(0, 180_deg, 0));
+		Enemies.back()->GetNode()->translateWorld(GetFormationOffset(3.f, i));
+		Enemies.back()->GetNode()->translateWorld({ 0.f, 1.f, Road->GetLength() + 5.f });
+	}
+}
+
+vec3 Level::GetFormationOffset(FLOAT GridStep, INDEX Index)
+{
+	INDEX Row = static_cast<INDEX>(((std::sqrtf(8 * Index + 1) - 1.f) / 2));
+	INDEX RowStart = (Row * (Row + 1)) / 2;
+	INDEX Column = Index - RowStart;
+	
+	FLOAT RowLength = 2 * GridStep * Row;
+	return { -RowLength / 2 + 2 * GridStep * Column, 0.f, -GridStep * Row  };
 }
