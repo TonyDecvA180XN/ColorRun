@@ -14,8 +14,8 @@ public:
 	Enemy & operator=(Enemy && Other) = delete;
 	~Enemy() override = default;
 
-	//BOOL IsDead() const { return ActorState == EActorState::Dead; }
+	void UpdateRun(FLOAT PlayheadPosition);
 
-	void Update(FLOAT PlayheadPosition) override;
+	void UpdateBattle(w4::math::vec3 ConvergePoint);
 	
 };

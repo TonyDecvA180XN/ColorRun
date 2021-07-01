@@ -6,6 +6,7 @@
 
 class Obstacle;
 class Pawn;
+class Enemy;
 
 class Collidable : public Entity
 {
@@ -31,6 +32,10 @@ public:
 
 	void Update(FLOAT PlayheadPosition) override {};
 
+	BOOL IsDead() const { return ActorState == EActorState::Dying || ActorState == EActorState::Dead; };
+
+	BOOL IsReadyToDelete() const { return ActorState == EActorState::Dead; };
+
 	void SetMesh(std::string filename, std::string model, FLOAT CollisionSize);
 
 	FLOAT GetPosition() const { return Mesh->getWorldTranslation().z; }
@@ -43,6 +48,7 @@ private:
 
 	static const Obstacle * const ObstacleType;
 	static const Pawn * const PawnType;
+	static const Enemy * const EnemyType;
 
 protected:
 

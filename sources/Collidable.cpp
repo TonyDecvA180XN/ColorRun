@@ -151,6 +151,28 @@ void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4
 			}
 		}
 	}
+	if (IsType(&*Source, PawnType) && IsType(&*Target, EnemyType))
+	{
+		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
+		{
+			Target->ActorState = EActorState::Dying;
+			Target->LastStateChangeTime = LinkToHub->GetClock();
+
+			Source->ActorState = EActorState::Dying;
+			Source->LastStateChangeTime = LinkToHub->GetClock();
+		}
+	}
+	if (IsType(&*Source, EnemyType) && IsType(&*Target, PawnType))
+	{
+		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
+		{
+			Source->ActorState = EActorState::Dying;
+			Source->LastStateChangeTime = LinkToHub->GetClock();
+
+			Target->ActorState = EActorState::Dying;
+			Target->LastStateChangeTime = LinkToHub->GetClock();
+		}
+	}
 }
 
 void Collidable::SetUniformScale(FLOAT Scale)

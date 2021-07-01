@@ -14,9 +14,9 @@ public:
 	Pawn & operator=(Pawn && Other) = delete;
 	~Pawn() override = default;
 
-	BOOL IsDead() const { return ActorState == EActorState::Dead; }
+	void UpdateRun(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead);
 
-	void Update(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead);
+	void UpdateBattle(w4::math::vec3 Direction);
 	
 	void SetColor(const w4::math::vec4 InColor) override;
 

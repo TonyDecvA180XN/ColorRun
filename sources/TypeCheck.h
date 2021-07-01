@@ -2,6 +2,7 @@
 
 #include "Obstacle.h"
 #include "Pawn.h"
+#include "Enemy.h"
 
 template <class TBaseType, class TDerivedType>
 BOOL IsType(const TBaseType * const Destination, const TDerivedType * const Source)

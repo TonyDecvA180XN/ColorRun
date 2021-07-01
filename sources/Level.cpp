@@ -3,7 +3,8 @@
 #include "MathUtils.h"
 
 Level::Level(Hub & InHub, INDEX Number) :
-	Playhead(make::sptr<Node>())
+	Playhead(make::sptr<Node>()),
+	LevelState(ELevelState::Run)
 {
 	// setup level
 	switch (Number)
@@ -106,37 +107,104 @@ Level::~Level()
 
 INT Level::Update(FLOAT DeltaTime)
 {
-	constexpr FLOAT MovementSpeed = 16.f;
-	Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
+	if (LevelState == ELevelState::Run)
+	{
+		constexpr FLOAT MovementSpeed = 8.f;
+		Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
-	FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
-	Road->Update(PlayheadPosition);
-	for (sptr<Obstacle> Each : Obstacles)
-	{
-		Each->Update(PlayheadPosition);
+		FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
+		Road->Update(PlayheadPosition);
+		for (sptr<Obstacle> Each : Obstacles)
+		{
+			Each->Update(PlayheadPosition);
+		}
+		for (sptr<Pawn> Each : Pawns)
+		{
+			Each->UpdateRun(PlayheadPosition, Playhead);
+		}
+		for (auto Each = Pawns.begin(); Each != Pawns.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Pawns.erase(Each);
+			else
+				++Each;
+		}
+		for (sptr<Enemy> Each : Enemies)
+		{
+			Each->UpdateRun(PlayheadPosition);
+		}
+		
+		if (PlayheadPosition >= Road->GetLength())
+		{
+			LevelState = ELevelState::Battle;
+		}
+		if (Pawns.empty())
+			return -1;
 	}
-	for (sptr<Pawn> Each : Pawns)
+	else if (LevelState == ELevelState::Battle)
 	{
-		Each->Update(PlayheadPosition, Playhead);
-	}
-	for (auto Each = Pawns.begin(); Each != Pawns.end();)
-	{
-		if ((*Each)->IsDead())
-			Each = Pawns.erase(Each);
-		else
-			++Each;
-	}
-	for (sptr<Enemy> Each : Enemies)
-	{
-		Each->Update(PlayheadPosition);
+		for (sptr<Pawn> Each : Pawns)
+		{
+			vec3 ClosestEnemyPosition;
+			FLOAT ClosestEnemyDistance = INF;
+			
+			for (sptr<Enemy> Opponent : Enemies)
+			{
+				if (!Opponent->IsDead())
+				{
+					FLOAT EnemyDistance = (Each->GetNode()->getWorldTranslation() - Opponent->GetNode()->getWorldTranslation()).length();
+					if (EnemyDistance < ClosestEnemyDistance)
+					{
+						ClosestEnemyDistance = EnemyDistance;
+						ClosestEnemyPosition = Opponent->GetNode()->getWorldTranslation();
+					}
+				}
+			}
+			Each->UpdateBattle(ClosestEnemyPosition);
+		}
+		for (sptr<Enemy> Each : Enemies)
+		{
+			vec3 ClosestEnemyPosition;
+			FLOAT ClosestEnemyDistance = INF;
+			
+			for (sptr<Pawn> Opponent : Pawns)
+			{
+				if (!Opponent->IsDead())
+				{
+					FLOAT EnemyDistance = (Each->GetNode()->getWorldTranslation() - Opponent->GetNode()->getWorldTranslation()).length();
+					if (EnemyDistance < ClosestEnemyDistance)
+					{
+						ClosestEnemyDistance = EnemyDistance;
+						ClosestEnemyPosition = Opponent->GetNode()->getWorldTranslation();
+					}
+				}
+			}
+
+			Each->UpdateBattle(ClosestEnemyPosition);
+		}
+
+		for (auto Each = Pawns.begin(); Each != Pawns.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Pawns.erase(Each);
+			else
+				++Each;
+		}
+		for (auto Each = Enemies.begin(); Each != Enemies.end();)
+		{
+			if ((*Each)->IsReadyToDelete())
+				Each = Enemies.erase(Each);
+			else
+				++Each;
+		}
+
+		if (Pawns.empty())
+			return -1;
+		if (Enemies.empty())
+			return Pawns.size();
 	}
 	
-	if (Pawns.size() == 0)
-		return -1;
-	if (PlayheadPosition >= Road->GetLength())
-		return Pawns.size();
 	return 0;
-
 }
 
 void Level::OnColorChanged(vec4 Color)
@@ -233,6 +301,7 @@ void Level::CreateLevel1(Hub & InHub)
 		Pawns.back()->SetMaterial("default"s);
 		Pawns.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
 		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->GetNode()->setWorldRotation(Rotator());
 		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
 		Pawns.back()->Parent(Playhead);
 	}
@@ -245,6 +314,8 @@ void Level::CreateLevel1(Hub & InHub)
 		Pawns.back()->SetMaterial("default"s);
 		Pawns.back()->GetNode()->translateWorld(PawnPositions[i]);
 		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->GetNode()->setWorldRotation(Rotator());
+
 		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
 		//Pawns.back()->Parent(Playhead);
 	}
@@ -261,22 +332,24 @@ void Level::CreateLevel1(Hub & InHub)
 
 	// create battle field
 	sptr<Entity> BattleField = make::uptr<Entity>(InHub);
-	BattleField->SetMesh(Mesh::create::plane({ 20.f, 20.f }));
+	BattleField->SetMesh(Mesh::create::plane({ 20.f, 15.f }));
 	BattleField->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
-	BattleField->GetNode()->translateWorld({ 0, 0.f, Road->GetLength() + 5.f });
+	BattleField->GetNode()->translateWorld({ 0, 0.1f, Road->GetLength() + 5.f });
 	BattleField->SetMaterial("lambert"s);
 	BattleField->SetTexture("textures/wall.jpg"s);
 
 	constexpr SIZE NumEnemies = 4;
-
+	
+	// add enemy side army
 	for (INDEX i = 0; i != NumEnemies; ++i)
 	{
-		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Ready));
+		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Alive));
 		Enemies.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
 		Enemies.back()->SetMaterial("default"s);
 		Enemies.back()->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+		Enemies.back()->GetNode()->setWorldRotation(Rotator());
 		Enemies.back()->GetNode()->rotateWorld(Rotator(0, 180_deg, 0));
-		Enemies.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
+		Enemies.back()->GetNode()->translateWorld(GetFormationOffset(3.f, i));
 		Enemies.back()->GetNode()->translateWorld({ 0.f, 1.f, Road->GetLength() + 5.f });
 	}
 }

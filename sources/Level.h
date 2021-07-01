@@ -13,6 +13,13 @@ class Level
 {
 public:
 
+	enum class ELevelState
+	{
+		None = 0,
+		Run,
+		Battle
+	};
+
 	Level() = delete;
 	Level(const Level & other) = delete;
 	Level(Level && other) = default;
@@ -33,6 +40,8 @@ private:
 	//void CreateLevel5(Hub & InHub);
 
 	vec3 GetFormationOffset(FLOAT GridStep, INDEX Index);
+
+	ELevelState LevelState { ELevelState::None };
 
 	sptr<Road> Road {};
 	sptr<Node> Playhead {};
