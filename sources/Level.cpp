@@ -78,17 +78,6 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
 	Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(-1.0f, -3.0f, 2.0f));
 
-	// add floor
-	//constexpr SIZE FloorTilingFactor = 16;
-	//constexpr FLOAT FloorSizeAbsolute = 256.f;
-	//sptr<Entity> Floor = make::uptr<Entity>(InHub);
-	//Floor->SetMesh(Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE));
-	//Floor->GetNode()->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
-	//Floor->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
-	//Floor->GetNode()->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
-	//Floor->SetMaterial("lambert"s);
-	//Floor->SetTexture("textures/grass.jpg"s);
-	
 	// link parents
 	Playhead->addChild(Camera);
 	Playhead->addChild(FrontLight);
@@ -221,15 +210,8 @@ void Level::OnColorChanged(vec4 Color)
 
 void Level::CreateLevel1(Hub & InHub)
 {
-	//constexpr SIZE NumRoadChunks = 16;
-
-	//Road = w4::make::sptr<class Road>();
-	//Road->LoadMeshes("meshes/chunks.w4a"s, 1);
-	//Road->BuildMap(NumRoadChunks, InHub.GetSceneRoot());
-	
 	Length = 380.f;
 	constexpr SIZE NumObstacles = 12;
-	//constexpr SIZE NumClutterObjects = 12;
 	constexpr SIZE NumPawnsLocal = 6; // initial crowd
 	constexpr SIZE NumPawnsGlobal = 9; // spread across level
 
@@ -319,9 +301,7 @@ void Level::CreateLevel1(Hub & InHub)
 		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Ready, EMeshType::Skinned));
 		Pawns.back()->SetSkinnedMesh("stickman.w4a"s, "mesh"s, 0.75f);
 		Pawns.back()->SetMaterial("lambert"s);
-		//Pawns.back()->GetNode()->setLocalScale({ 1.f, 1.f, 1.f });
 		Pawns.back()->GetNode()->translateWorld(PawnPositions[i]);
-		//Pawns.back()->GetNode()->translateWorld({ 0.f, 0.f, 0.f });
 		Pawns.back()->GetNode()->setWorldRotation(Rotator());
 		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f }, TRUE);
 		Pawns.back()->Play("Standby");
@@ -384,7 +364,6 @@ void Level::CreateLevel1(Hub & InHub)
 												W4_LOG_INFO(("Uncolored Mesh: " + NodeName).c_str());
 										   }
 									   });
-	//a->GetMaterial();
 
 	constexpr SIZE NumEnemies = 5;
 	
