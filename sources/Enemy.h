@@ -7,7 +7,7 @@ class Enemy : public Collidable
 {
 public:
 	Enemy() = delete;
-	Enemy(Hub & InHub, EActorState InActorState = EActorState::Alive);
+	Enemy(Hub & InHub, EActorState InActorState = EActorState::Alive, EMeshType InMeshType = EMeshType::Static);
 	Enemy(const Enemy & Other) = delete;
 	Enemy(Enemy && Other);
 	Enemy & operator=(const Enemy & Other) = delete;

@@ -1,8 +1,8 @@
 #include "Enemy.h"
 #include "MathUtils.h"
 
-Enemy::Enemy(Hub & InHub, EActorState InActorState) :
-	Collidable(InHub, InActorState)
+Enemy::Enemy(Hub & InHub, EActorState InActorState, EMeshType InMeshType) :
+	Collidable(InHub, InActorState, InMeshType)
 {
 }
 
@@ -13,7 +13,7 @@ Enemy::Enemy(Enemy && Other) :
 
 void Enemy::UpdateRun(FLOAT PlayheadPosition)
 {
-	SetElevation(1.f + 0.25f * std::sinf(0.5f * PlayheadPosition));
+	//SetElevation(1.f + 0.25f * std::sinf(0.5f * PlayheadPosition));
 }
 
 void Enemy::UpdateBattle(w4::math::vec3 ConvergePoint)
@@ -21,7 +21,7 @@ void Enemy::UpdateBattle(w4::math::vec3 ConvergePoint)
 	static constexpr FLOAT SpawnDistance = 24.f;
 	//static constexpr FLOAT DespawnDistance = 16.f;
 	static constexpr FLOAT SpawnTime = 1.f;
-	static constexpr FLOAT DespawnTime = 1.f;
+	static constexpr FLOAT DespawnTime = 1.5f;
 
 	switch (ActorState)
 	{
@@ -35,13 +35,19 @@ void Enemy::UpdateBattle(w4::math::vec3 ConvergePoint)
 
 			constexpr FLOAT AttackSpeed = 0.02f;
 			GetNode()->translateWorld(LookVector.normalize() * AttackSpeed);
+			if (ShouldDie)
+			{
+				ActorState = EActorState::Dying;
+				SetUpdatedTime();
+				Play("Death");
+			}
 			break;
 		}
 		case Collidable::EActorState::Dying:
 		{
 			Collider->setIntersecting(FALSE);
 			FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-			SetElevation(TimeElapsed * 10.f);
+			//SetElevation(TimeElapsed * 10.f);
 			if (TimeElapsed >= DespawnTime)
 			{
 				ActorState = EActorState::Dead;

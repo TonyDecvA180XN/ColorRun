@@ -11,7 +11,7 @@ Road::RoadChunk::RoadChunk(INDEX variation, w4::sptr<w4::render::Node> chunk_mes
 
 void Road::RoadChunk::Enable()
 {
-	m_chunkMesh->setEnabled(TRUE);
+	//m_chunkMesh->setEnabled(TRUE);
 }
 
 void Road::RoadChunk::Disable()

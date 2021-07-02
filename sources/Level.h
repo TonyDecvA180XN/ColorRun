@@ -30,7 +30,7 @@ public:
 
 	void OnColorChanged(vec4 Color);
 
-	FLOAT GetLength() const { return this->Road->GetLength(); };
+	//FLOAT GetLength() const { return this->Road->GetLength(); };
 
 private:
 	void CreateLevel1(Hub & InHub);
@@ -43,7 +43,8 @@ private:
 
 	ELevelState LevelState { ELevelState::None };
 
-	sptr<Road> Road {};
+	//sptr<Road> Road {};
+	FLOAT Length {};
 	sptr<Node> Playhead {};
 	std::vector<sptr<Obstacle>> Obstacles {};
 	std::vector<sptr<Pawn>> Pawns {};

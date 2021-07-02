@@ -43,58 +43,57 @@ Level::Level(Hub & InHub, INDEX Number) :
 	// load HDRI
 	sptr<Cubemap> EnvironmentTexture = Cubemap::fromImages(
 		{
-			resources::Image::get("textures/env/sky/px.png"s),
-			resources::Image::get("textures/env/sky/nx.png"s),
-			resources::Image::get("textures/env/sky/py.png"s),
-			resources::Image::get("textures/env/sky/ny.png"s),
-			resources::Image::get("textures/env/sky/pz.png"s),
-			resources::Image::get("textures/env/sky/nz.png"s)
+			resources::Image::get("textures/env/sky_release/px.png"s),
+			resources::Image::get("textures/env/sky_release/nx.png"s),
+			resources::Image::get("textures/env/sky_release/py.png"s),
+			resources::Image::get("textures/env/sky_release/ny.png"s),
+			resources::Image::get("textures/env/sky_release/pz.png"s),
+			resources::Image::get("textures/env/sky_release/nz.png"s)
 		});
 	EnvironmentTexture->setFiltering(Filtering::Level1);
 	
 
 	// tune camera
 	sptr<class Camera> Camera = Render::getScreenCamera();
-	Camera->setFov(60.0f);
-	Camera->setWorldTranslation({ 0.f, 5.f, -10.f });
+	Camera->setFov(65.0f);
+	Camera->setWorldTranslation({ 0.f, 8.f, -10.f });
 	Camera->setWorldRotation(Rotator(30_deg, 0, 0.0f));
 	Camera->setClearMask(ClearMask::Color | ClearMask::Depth | ClearMask::Skybox);
 	Camera->getSkybox()->setCubemap(EnvironmentTexture);
 
 	// create surround lights
 	sptr<PointLight> FrontLight = make::sptr<PointLight>("FrontLight"s);
-	FrontLight->setWorldTranslation({ 0.f, 5.f, 3.f });
+	FrontLight->setWorldTranslation({ 0.f, 8.f, 6.f });
 	FrontLight->setColor({ 1.f, 1.f, 1.f });
 	FrontLight->setDecayRate(core::LightDecayRate::Linear);
-	FrontLight->setIntensity(0.5f);
+	FrontLight->setIntensity(1.f);
 
 	sptr<PointLight> BackLight = make::sptr<PointLight>("BackLight"s);
-	BackLight->setWorldTranslation({ 0.f, 5.f, -3.f });
-	BackLight->setColor({ 1.f, 1.f, 1.f });
+	BackLight->setWorldTranslation({ 0.f, 6.f, -6.f });
+	BackLight->setColor({ 1.f, 1.f, 0.9f });
 	BackLight->setDecayRate(core::LightDecayRate::Linear);
-	BackLight->setIntensity(0.5f);
+	BackLight->setIntensity(1.f);
 
 	// setup sun light
 	Render::getPass(0)->getDirectionalLight()->setColor(math::vec3(1.f, 1.f, 1.f));
-	Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(1.0f, -1.0f, 1.0f));
+	Render::getPass(0)->getDirectionalLight()->setDirection(math::vec3(-1.0f, -3.0f, 2.0f));
 
 	// add floor
-	constexpr SIZE FloorTilingFactor = 16;
-	constexpr FLOAT FloorSizeAbsolute = 256.f;
-	sptr<Entity> Floor = make::uptr<Entity>(InHub);
-	Floor->SetMesh(Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE));
-	Floor->GetNode()->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
-	Floor->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
-	Floor->GetNode()->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
-	Floor->SetMaterial("lambert"s);
-	Floor->SetTexture("textures/grass.jpg"s);
+	//constexpr SIZE FloorTilingFactor = 16;
+	//constexpr FLOAT FloorSizeAbsolute = 256.f;
+	//sptr<Entity> Floor = make::uptr<Entity>(InHub);
+	//Floor->SetMesh(Mesh::create::plane({ FloorTilingFactor, FloorTilingFactor }, TRUE));
+	//Floor->GetNode()->setWorldScale({ FloorSizeAbsolute / FloorTilingFactor, FloorSizeAbsolute / FloorTilingFactor, 1.f });
+	//Floor->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
+	//Floor->GetNode()->setWorldTranslation({ 0, -0.1f, FloorSizeAbsolute / 2 - 16.f});
+	//Floor->SetMaterial("lambert"s);
+	//Floor->SetTexture("textures/grass.jpg"s);
 	
 	// link parents
 	Playhead->addChild(Camera);
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
-	//InHub.GetSceneRoot()->addChild(Floor);
 }
 
 Level::~Level()
@@ -113,7 +112,7 @@ INT Level::Update(FLOAT DeltaTime)
 		Playhead->translateWorld({ 0.f, 0.f, MovementSpeed * DeltaTime });
 
 		FLOAT PlayheadPosition = Playhead->getWorldTranslation().z;
-		Road->Update(PlayheadPosition);
+		//Road->Update(PlayheadPosition);
 		for (sptr<Obstacle> Each : Obstacles)
 		{
 			Each->Update(PlayheadPosition);
@@ -134,9 +133,13 @@ INT Level::Update(FLOAT DeltaTime)
 			Each->UpdateRun(PlayheadPosition);
 		}
 		
-		if (PlayheadPosition >= Road->GetLength())
+		if (PlayheadPosition >= Length)
 		{
 			LevelState = ELevelState::Battle;
+			for (sptr<Pawn> Each : Pawns)
+				Each->Play("Attack");
+			for (sptr<Enemy> Each : Enemies)
+				Each->Play("Attack");
 		}
 		if (Pawns.empty())
 			return -1;
@@ -145,7 +148,7 @@ INT Level::Update(FLOAT DeltaTime)
 	{
 		for (sptr<Pawn> Each : Pawns)
 		{
-			vec3 ClosestEnemyPosition;
+			vec3 ClosestEnemyPosition = { 0.f, 0.f, 1.f };
 			FLOAT ClosestEnemyDistance = INF;
 			
 			for (sptr<Enemy> Opponent : Enemies)
@@ -164,7 +167,7 @@ INT Level::Update(FLOAT DeltaTime)
 		}
 		for (sptr<Enemy> Each : Enemies)
 		{
-			vec3 ClosestEnemyPosition;
+			vec3 ClosestEnemyPosition = { 0.f, 0.f, 1.f };
 			FLOAT ClosestEnemyDistance = INF;
 			
 			for (sptr<Pawn> Opponent : Pawns)
@@ -212,46 +215,60 @@ void Level::OnColorChanged(vec4 Color)
 	Pawn::CrowdColor = Color;
 	for (sptr<Pawn> Each : Pawns)
 	{
-		Each->SetColor(Color);
+		Each->SetColor(Pawn::CrowdColor, FALSE);
 	}
 }
 
 void Level::CreateLevel1(Hub & InHub)
 {
-	constexpr SIZE NumRoadChunks = 16;
+	//constexpr SIZE NumRoadChunks = 16;
 
-	Road = w4::make::sptr<class Road>();
-	Road->LoadMeshes("meshes/chunks.w4a"s, 1);
-	Road->BuildMap(NumRoadChunks, InHub.GetSceneRoot());
+	//Road = w4::make::sptr<class Road>();
+	//Road->LoadMeshes("meshes/chunks.w4a"s, 1);
+	//Road->BuildMap(NumRoadChunks, InHub.GetSceneRoot());
 	
-	constexpr SIZE NumObstacles = 6;
-	constexpr SIZE NumClutterObjects = 12;
+	Length = 380.f;
+	constexpr SIZE NumObstacles = 12;
+	//constexpr SIZE NumClutterObjects = 12;
 	constexpr SIZE NumPawnsLocal = 6; // initial crowd
-	constexpr SIZE NumPawnsGlobal = 3; // spread across level
+	constexpr SIZE NumPawnsGlobal = 9; // spread across level
 
 
 
 	std::array<w4::math::vec3, NumObstacles> ObstaclePositions =
 	{
 		{
-			{ -3.f, 0.f, 4 * 8.f },
-			{ +0.f, 0.f, 6 * 8.f },
-			{ +3.f, 0.f, 8 * 8.f },
-			{ +0.f, 0.f, 10 * 8.f },
-			{ +0.f, 0.f, 11 * 8.f },
-			{ -3.f, 0.f, 13 * 8.f }
+			{ -3, 0, 30 },
+			{ +0, 0, 50 },
+			{ +3, 0, 80 },
+			{ -3, 0, 120 },
+			{ +3, 0, 150 },
+			{ +0, 0, 180 },
+			{ -3, 0, 190 },
+			{ +3, 0, 250 },
+			{ -3, 0, 260 },
+			{ +0, 0, 280 },
+			{ +0, 0, 320 },
+			{ +0, 0, 350 }
+			
 		}
 	};
 
 	std::array<vec4, NumObstacles> ObstacleColors = 
 	{
 		{
-			{ 1.f, 0.f, 0.f, 1.f },
-			{ 0.f, 1.f, 0.f, 1.f },
-			{ 0.f, 0.f, 1.f, 1.f },
-			{ 0.f, 1.f, 1.f, 1.f },
-			{ 1.f, 0.f, 1.f, 1.f },
-			{ 1.f, 1.f, 0.f, 1.f },
+			color(color::Red).rgba,
+			color(0x00FF00FF).rgba,
+			color(color::Blue).rgba,
+			color(color::Cyan).rgba,
+			color(color::Magenta).rgba,
+			color(color::Yellow).rgba,
+			color(color::Black).rgba,
+			color(0x00FF00FF).rgba,
+			color(color::Blue).rgba,
+			color(color::Black).rgba,
+			color(color::Red).rgba,
+			color(color::Cyan).rgba,
 		}
 	};
 
@@ -259,98 +276,132 @@ void Level::CreateLevel1(Hub & InHub)
 	{
 		{
 			{ +3.f, 0.f, 4 * 8.f },
-			{ +0.f, 0.f, 5 * 8.f },
+			{ +1.f, 0.f, 5 * 8.f },
 			{ -3.f, 0.f, 8 * 8.f },
+			{ -1.5f, 0.f, 10 * 8.f },
+			{ -1.f, 0.f, 12 * 8.f },
+			{ +1.5f, 0.f, 16 * 8.f },
+			{ -3.f, 0.f, 20 * 8.f },
+			{ -0.f, 0.f, 28 * 8.f },
+			{ +3.f, 0.f, 32 * 8.f },
 		}
 	};
 
-	//std::array<w4::math::vec3, NumClutterObjects> ClutterPositions =
-	//{
-	//	{
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ +6.f, 0.f, 5 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f }
-	//		
-	//	}
-	//};
 	
 	// add obstacles
 	for (INDEX i = 0; i != NumObstacles; ++i)
 	{
 		Obstacles.push_back(make::uptr<Obstacle>(InHub));
-		Obstacles.back()->SetMesh("meshes/wall.w4a"s, "wall"s, 1.f);
-		Obstacles.back()->SetMaterial("default"s);
+		Obstacles.back()->SetMesh("meshes/stonewall.w4a"s, "wall"s, 1.f*40);
+		Obstacles.back()->SetMaterial("lambert"s);
 		Obstacles.back()->GetNode()->setWorldTranslation(ObstaclePositions[i]);
+		Obstacles.back()->GetNode()->setWorldScale({ 0.1f, 0.1f, 0.1f });
+		Obstacles.back()->GetNode()->translateWorld({ 0, 0.2f, 0 });
 		Obstacles.back()->SetColor(ObstacleColors[i]);
 	}
 
 	// add initial crowd
 	for (INDEX i = 0; i != NumPawnsLocal; ++i)
 	{
-		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive));
-		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
-		Pawns.back()->SetMaterial("default"s);
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Alive, EMeshType::Skinned));
+		Pawns.back()->SetSkinnedMesh("stickman.w4a"s, "mesh"s, 0.75f);
+		Pawns.back()->SetMaterial("lambert"s);
 		Pawns.back()->GetNode()->translateWorld(GetFormationOffset(1.5f, i));
-		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		Pawns.back()->GetNode()->translateWorld({ 0.f, 0.f, 0.f });
+		//Pawns.back()->GetNode()->setLocalScale({ 1.f, 1.f, 1.f });
 		Pawns.back()->GetNode()->setWorldRotation(Rotator());
-		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f }, TRUE);
 		Pawns.back()->Parent(Playhead);
+		Pawns.back()->Play("Run");
 	}
 
 	// add crowd recruits
 	for (INDEX i = 0; i != NumPawnsGlobal; ++i)
 	{
-		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Ready));
-		Pawns.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
-		Pawns.back()->SetMaterial("default"s);
+		Pawns.push_back(make::uptr<Pawn>(InHub, Collidable::EActorState::Ready, EMeshType::Skinned));
+		Pawns.back()->SetSkinnedMesh("stickman.w4a"s, "mesh"s, 0.75f);
+		Pawns.back()->SetMaterial("lambert"s);
+		//Pawns.back()->GetNode()->setLocalScale({ 1.f, 1.f, 1.f });
 		Pawns.back()->GetNode()->translateWorld(PawnPositions[i]);
-		Pawns.back()->GetNode()->translateWorld({ 0.f, 1.f, 0.f });
+		//Pawns.back()->GetNode()->translateWorld({ 0.f, 0.f, 0.f });
 		Pawns.back()->GetNode()->setWorldRotation(Rotator());
-
-		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
-		//Pawns.back()->Parent(Playhead);
+		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f }, TRUE);
+		Pawns.back()->Play("Standby");
 	}
-	
-	//for (INDEX i = 0; i != NumClutterObjects; ++i)
-	//{
-	//	INDEX Offset = i + NumObstacles;
-	//	Entities.emplace_back(InHub);
-	//	Entities[Offset].SetMesh("meshes/wall.w4a"s, "wall"s);
-	//	Entities[Offset].SetMaterial("lambert"s);
-	//	Entities[Offset].SetTexture("textures/wall.jpg");
-	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
-	//}
 
-	// create battle field
-	sptr<Entity> BattleField = make::uptr<Entity>(InHub);
-	BattleField->SetMesh(Mesh::create::plane({ 20.f, 15.f }));
-	BattleField->GetNode()->setWorldRotation(Rotator(90_deg, 0, 0));
-	BattleField->GetNode()->translateWorld({ 0, 0.1f, Road->GetLength() + 5.f });
-	BattleField->SetMaterial("lambert"s);
-	BattleField->SetTexture("textures/wall.jpg"s);
+	sptr<Entity> a = make::uptr<Entity>(InHub);
+	a->SetMesh("meshes/road.w4a", ""s);
+	a->GetNode()->setWorldRotation(Rotator(0, 180_deg, 0));
+	a->GetNode()->setWorldTranslation({ 0, 0.2f, 20.f });
+	a->GetNode()->setWorldScale({ 0.1f, 0.1f, 0.1f });
+	a->GetNode()->traversalTyped<Mesh>([&InHub](cref<Mesh> Node)
+									   {
+										   std::string NodeName(Node->getName());
+										   if (NodeName.rfind("leaf", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("darkgreen"));
+										   }
+										   else if (NodeName.rfind("b", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("B", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("Chest", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("Fire", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("Road", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("grey"));
+										   }
+										   else if (NodeName.rfind("Fense", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("Landscape", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("green"));
+										   }
+										   else if (NodeName.rfind("hill", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("darkgrey"));
+										   }
+										   else if (NodeName.rfind("gate", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("brown"));
+										   }
+										   else if (NodeName.rfind("Hay", 0) == 0)
+										   {
+											   Node->setMaterialInst(InHub.ResolveColor("yellow"));
+										   }
+										   else
+										   {
+												W4_LOG_INFO(("Uncolored Mesh: " + NodeName).c_str());
+										   }
+									   });
+	//a->GetMaterial();
 
-	constexpr SIZE NumEnemies = 4;
+	constexpr SIZE NumEnemies = 5;
 	
 	// add enemy side army
 	for (INDEX i = 0; i != NumEnemies; ++i)
 	{
-		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Alive));
-		Enemies.back()->SetMesh("meshes/monkey.w4a"s, "monkey"s, 0.9f);
-		Enemies.back()->SetMaterial("default"s);
-		Enemies.back()->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+		Enemies.push_back(make::uptr<Enemy>(InHub, Collidable::EActorState::Alive, EMeshType::Skinned));
+		Enemies.back()->SetSkinnedMesh("stickman.w4a"s, "mesh"s, 1.f);
+		Enemies.back()->SetMaterial("lambert"s);
+		Enemies.back()->SetColor({ 0.9f, 0.9f, 0.9f, 1.0f });
 		Enemies.back()->GetNode()->setWorldRotation(Rotator());
 		Enemies.back()->GetNode()->rotateWorld(Rotator(0, 180_deg, 0));
 		Enemies.back()->GetNode()->translateWorld(GetFormationOffset(3.f, i));
-		Enemies.back()->GetNode()->translateWorld({ 0.f, 1.f, Road->GetLength() + 5.f });
+		Enemies.back()->GetNode()->translateWorld({ 0.f, 0.f, Length + 16.f });
+		Enemies.back()->Play("Standby");
 	}
 }
 

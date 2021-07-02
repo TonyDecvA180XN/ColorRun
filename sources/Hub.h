@@ -15,10 +15,12 @@ public:
 	Hub(Hub && Other) = default;
 	Hub(w4::sptr<w4::render::Node> SceneRoot, FLOAT Time);
 
-	w4::sptr<w4::render::Mesh> ResolveMesh(INDEX CallerId, const std::string & Filename, const std::string & Model = ""s);
+	w4::sptr<w4::render::Node> ResolveMesh(INDEX CallerId, const std::string & Filename, const std::string & Model = ""s);
+	w4::sptr<w4::render::SkinnedMesh> ResolveSkinnedMesh(INDEX CallerId, const std::string & Filename, const std::string & Model = ""s);
 	w4::sptr<Entity> ResolveEntity(const std::string & Name);
 	w4::sptr<w4::resources::Texture> ResolveTexture(const std::string & Filename);
 	w4::sptr<w4::resources::MaterialInst> ResolveMaterial(const std::string & Name);
+	w4::sptr<w4::resources::MaterialInst> ResolveColor(const std::string & Name);
 
 	void Update(FLOAT Time);
 
@@ -35,5 +37,6 @@ private:
 	w4::sptr<w4::render::Node> SceneRoot {};
 
 	std::unordered_map<std::string, w4::sptr<w4::resources::Material>> Materials {};
+	std::unordered_map<std::string, w4::sptr<w4::resources::MaterialInst>> PredefinedMaterials {};
 	std::unordered_map<std::string, w4::sptr<Entity>> Entities {};
 };

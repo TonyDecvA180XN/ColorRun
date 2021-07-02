@@ -4,8 +4,15 @@
 const Obstacle * const ObstacleType = nullptr;
 const Pawn * const PawnType = nullptr;
 
-Collidable::Collidable(Hub & InHub, EActorState InActorState) :
-	Entity(InHub), ActorState(InActorState), LastStateChangeTime(InHub.GetClock())
+std::string c2s(w4::math::vec4 c)
+{
+	return std::to_string(c.x) + ", "s + std::to_string(c.y) + ", "s + std::to_string(c.z);
+}
+
+Collidable::Collidable(Hub & InHub, EActorState InActorState, EMeshType InMeshType) :
+	Entity(InHub, InMeshType),
+	ActorState(InActorState),
+	LastStateChangeTime(InHub.GetClock())
 {
 }
 
@@ -18,88 +25,34 @@ Collidable::Collidable(Collidable && Other) :
 {
 }
 
-//void Collidable::Update(FLOAT PlayheadPosition)
-//{
-//	static constexpr FLOAT SpawnDistance = 24.f;
-//	static constexpr FLOAT DespawnDistance = 16.f;
-//	static constexpr FLOAT SpawnTime = 1.f;
-//	static constexpr FLOAT DespawnTime = 1.f;
-//
-//	if (ActorType == EActorType::Obstacle)
-//	{
-//		switch (ActorState)
-//		{
-//			case Collidable::EActorState::Ready:
-//			{
-//				Collider->setIntersecting(FALSE);
-//				SetUniformScale(*this, 0.f);
-//				SetElevation(*this, 0.f);
-//				FLOAT ObstacleDistance = std::abs(GetPosition() - PlayheadPosition);
-//				if (ObstacleDistance < SpawnDistance)
-//				{
-//					ActorState = EActorState::Nascent;
-//					SetUpdatedTime();
-//				}
-//				break;
-//			}
-//			case Collidable::EActorState::Nascent:
-//			{
-//				FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-//				TimeElapsed = std::min(TimeElapsed, SpawnTime);
-//				FLOAT Growth = TimeElapsed / SpawnTime;
-//				SetUniformScale(*this, Growth);
-//				FLOAT Elevation = - 4.f * (Growth * Growth) + 3.f * Growth + 1.f;
-//				SetElevation(*this, Elevation);
-//				
-//				if (LinkToHub->GetClock() >= LastStateChangeTime + SpawnTime)
-//				{
-//					ActorState = EActorState::Alive;
-//					SetUpdatedTime();
-//					SetUniformScale(*this, 1.f);
-//					SetElevation(*this, 0.f);
-//				}
-//				break;
-//			}
-//			case Collidable::EActorState::Alive:
-//			{
-//				Collider->setIntersecting(TRUE);
-//				FLOAT ObstacleDistance = std::abs(GetPosition() - PlayheadPosition);
-//				if (ObstacleDistance >= DespawnDistance)
-//				{
-//					ActorState = EActorState::Dead;
-//					SetUpdatedTime();
-//				}
-//				break;
-//			}
-//			case Collidable::EActorState::Dying:
-//			{
-//				Collider->setIntersecting(FALSE);
-//				FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-//				SetElevation(*this, TimeElapsed * 10.f);
-//				if (TimeElapsed >= DespawnTime)
-//				{
-//					ActorState = EActorState::Dead;
-//					SetUpdatedTime();
-//				}
-//				break;
-//			}
-//			case Collidable::EActorState::Dead:
-//			{
-//				Collider->setIntersecting(FALSE);
-//				break;
-//			}
-//			default:
-//			{
-//				break;
-//			}
-//		}
-//	}
-//}
-
 void Collidable::SetMesh(std::string filename, std::string model, FLOAT CollisionSize)
 {
 	Entity::SetMesh(filename, model);
 	Collider = Mesh->addCollider<w4::core::Sphere>(CollisionSize);
+	Collider->setIntersectionCallback(
+		[this](const w4::core::CollisionInfo & Info)
+		{
+			OnCollision(*(Info.source), *(Info.target));
+		});
+	Collider->setIntersecting(FALSE);
+}
+
+void Collidable::SetMesh(w4::sptr<w4::render::Mesh> InMesh, FLOAT CollisionSize)
+{
+	Entity::SetMesh(InMesh);
+	Collider = Mesh->addCollider<w4::core::Sphere>(CollisionSize);
+	Collider->setIntersectionCallback(
+		[this](const w4::core::CollisionInfo & Info)
+		{
+			OnCollision(*(Info.source), *(Info.target));
+		});
+	Collider->setIntersecting(FALSE);
+}
+
+void Collidable::SetSkinnedMesh(std::string filename, std::string model, FLOAT CollisionSize)
+{
+	Entity::SetSkinnedMesh(filename, model);
+	Collider = SkinnedMesh->addCollider<w4::core::Sphere>(CollisionSize);
 	Collider->setIntersectionBeginCallback(
 		[this](const w4::core::CollisionInfo & Info)
 		{
@@ -110,8 +63,10 @@ void Collidable::SetMesh(std::string filename, std::string model, FLOAT Collisio
 
 void Collidable::SetColor(const w4::math::vec4 InColor)
 {
+
 	Color = InColor;
-	Material->setParam("baseColor", Color);
+	//Material->setParam("baseColor", Color);
+	Material->setTexture(w4::resources::TextureId::TEXTURE_0, w4::resources::Texture::get(w4::resources::ResourceGenerator(w4::resources::ColorTextureGenerator, Color)));
 }
 
 void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4::core::Collider & TargetCollider)
@@ -121,33 +76,34 @@ void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4
 
 	if (IsType(&*Source, PawnType) && IsType(&*Target, ObstacleType))
 	{
+		//W4_LOG_INFO(c2s(Source->GetColor()).c_str());
+		//W4_LOG_INFO(c2s(Target->GetColor()).c_str());
 		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
 		{
 			if (Source->GetColor() == Target->GetColor())
 			{
-				Target->ActorState = EActorState::Dying;
-				Target->LastStateChangeTime = LinkToHub->GetClock();
+				Target->ShouldDie = TRUE;
 			}
 			else
 			{
-				Source->ActorState = EActorState::Dying;
-				Source->LastStateChangeTime = LinkToHub->GetClock();
+				Source->ShouldDie = TRUE;
 			}
 		}
 	}
 	if (IsType(&*Source, ObstacleType) && IsType(&*Target, PawnType))
 	{
+		//W4_LOG_INFO(c2s(Source->GetColor()).c_str());
+		//W4_LOG_INFO(c2s(Target->GetColor()).c_str());
+
 		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
 		{
 			if (Source->GetColor() == Target->GetColor())
 			{
-				Source->ActorState = EActorState::Dying;
-				Source->LastStateChangeTime = LinkToHub->GetClock();
+				Source->ShouldDie = TRUE;
 			}
 			else
 			{
-				Target->ActorState = EActorState::Dying;
-				Target->LastStateChangeTime = LinkToHub->GetClock();
+				Target->ShouldDie = TRUE;
 			}
 		}
 	}
@@ -155,22 +111,18 @@ void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4
 	{
 		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
 		{
-			Target->ActorState = EActorState::Dying;
-			Target->LastStateChangeTime = LinkToHub->GetClock();
+			Target->ShouldDie = TRUE;
 
-			Source->ActorState = EActorState::Dying;
-			Source->LastStateChangeTime = LinkToHub->GetClock();
+			Source->ShouldDie = TRUE;	
 		}
 	}
 	if (IsType(&*Source, EnemyType) && IsType(&*Target, PawnType))
 	{
 		if (Source->ActorState == EActorState::Alive && Target->ActorState == EActorState::Alive)
 		{
-			Source->ActorState = EActorState::Dying;
-			Source->LastStateChangeTime = LinkToHub->GetClock();
+			Source->ShouldDie = TRUE;
 
-			Target->ActorState = EActorState::Dying;
-			Target->LastStateChangeTime = LinkToHub->GetClock();
+			Target->ShouldDie = TRUE;
 		}
 	}
 }
@@ -178,7 +130,6 @@ void Collidable::OnCollision(const w4::core::Collider & SourceCollider, const w4
 void Collidable::SetUniformScale(FLOAT Scale)
 {
 	this->GetNode()->setWorldScale({ Scale, Scale, Scale });
-
 }
 
 void Collidable::SetElevation(FLOAT Elevation)
