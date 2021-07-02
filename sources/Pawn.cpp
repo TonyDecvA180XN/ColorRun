@@ -3,8 +3,8 @@
 
 w4::math::vec4 Pawn::CrowdColor = { 1.f, 1.f, 1.f, 1.f };
 
-Pawn::Pawn(Hub & InHub, EActorState InActorState) :
-	Collidable(InHub, InActorState)
+Pawn::Pawn(Hub & InHub, EActorState InActorState, EMeshType InMeshType) :
+	Collidable(InHub, InActorState, InMeshType)
 {
 }
 
@@ -18,7 +18,7 @@ void Pawn::UpdateRun(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead
 	static constexpr FLOAT SpawnDistance = 24.f;
 	//static constexpr FLOAT DespawnDistance = 16.f;
 	static constexpr FLOAT SpawnTime = 1.f;
-	static constexpr FLOAT DespawnTime = 1.f;
+	static constexpr FLOAT DespawnTime = 3.f;
 	static constexpr FLOAT JoinDistance = 1.f;
 
 	switch (ActorState)
@@ -27,8 +27,8 @@ void Pawn::UpdateRun(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead
 	{
 		//SetElevation(1.f + 0.25f * std::sinf(0.5f * PlayheadPosition));
 
-		SetUniformScale(0.f);
-		SetElevation(1.f);
+		//SetUniformScale(0.f);
+		//SetElevation(1.f);
 		FLOAT PawnDistance = std::abs(GetPosition() - PlayheadPosition);
 		if (PawnDistance < SpawnDistance)
 		{
@@ -42,19 +42,20 @@ void Pawn::UpdateRun(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead
 		FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
 		TimeElapsed = std::min(TimeElapsed, SpawnTime);
 		FLOAT Growth = TimeElapsed / SpawnTime;
-		SetUniformScale(Growth);
+		//SetUniformScale(Growth);
 		FLOAT Elevation = -4.f * (Growth * Growth) + 3.f * Growth + 1.f;
-		SetElevation(Elevation + 1.f);
+		//SetElevation(Elevation + 1.f);
 
 		FLOAT CrowdDistance = std::abs(PlayheadPosition - GetNode()->getWorldTranslation().z);
 		if (CrowdDistance <= JoinDistance)
 		{
 			ActorState = EActorState::Alive;
 			SetUpdatedTime();
-			SetUniformScale(1.f);
-			SetElevation(1.f);
+			//SetUniformScale(1.f);
+			//SetElevation(0.f);
 			Parent(Playhead);
-			SetColor(CrowdColor);
+			SetColor(CrowdColor, FALSE);
+			Play("Run");
 			//GetNode()->translateWorld(GetFormationOffset(2.f, i));
 			//GetNode()->translateWorld({ 0.f, 1.f, 0.f });
 		}
@@ -63,18 +64,32 @@ void Pawn::UpdateRun(FLOAT PlayheadPosition, w4::sptr<w4::render::Node> Playhead
 	case Collidable::EActorState::Alive:
 	{
 		Collider->setIntersecting(TRUE);
+		if (ShouldDie)
+		{
+			ActorState = EActorState::Dying;
+			SetUpdatedTime();
+			Play("Death");
+		}
 		break;
 	}
 	case Collidable::EActorState::Dying:
 	{
 		Collider->setIntersecting(FALSE);
+		Parent(LinkToHub->GetSceneRoot());
 		FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-		SetElevation(TimeElapsed * 10.f);
+		//SetElevation(TimeElapsed * 10.f);
 		if (TimeElapsed >= DespawnTime)
 		{
 			ActorState = EActorState::Dead;
 			SetUpdatedTime();
-			Mesh->setEnabled(FALSE);
+			if (MeshType == EMeshType::Skinned)
+			{
+				SkinnedMesh->setEnabled(FALSE);
+			}
+			else
+			{
+				Mesh->setEnabled(FALSE);
+			}
 		}
 		break;
 	}
@@ -106,13 +121,19 @@ void Pawn::UpdateBattle(w4::math::vec3 ConvergePoint)
 
 			constexpr FLOAT AttackSpeed = 0.02f;
 			GetNode()->translateWorld(LookVector.normalize() * AttackSpeed);
+			if (ShouldDie)
+			{
+				ActorState = EActorState::Dying;
+				SetUpdatedTime();
+				Play("Death");
+			}
 			break;
 		}
 		case Collidable::EActorState::Dying:
 		{
 			Collider->setIntersecting(FALSE);
 			FLOAT TimeElapsed = std::abs(LinkToHub->GetClock() - LastStateChangeTime);
-			SetElevation(TimeElapsed * 10.f);
+			//SetElevation(TimeElapsed * 10.f);
 			if (TimeElapsed >= DespawnTime)
 			{
 				ActorState = EActorState::Dead;
@@ -131,10 +152,12 @@ void Pawn::UpdateBattle(w4::math::vec3 ConvergePoint)
 	}
 }
 
-void Pawn::SetColor(const w4::math::vec4 InColor)
+void Pawn::SetColor(const w4::math::vec4 InColor, BOOL Sure)
 {
-	if (ActorState == EActorState::Alive)
+	if (Sure || ActorState == EActorState::Alive)
 	{
-		Collidable::SetColor(InColor);
+		Color = InColor;
+		//Material->setParam("baseColor", Color);
+		Material->setTexture(w4::resources::TextureId::TEXTURE_0, w4::resources::Texture::get(w4::resources::ResourceGenerator(w4::resources::ColorTextureGenerator, Color)));
 	}
 }

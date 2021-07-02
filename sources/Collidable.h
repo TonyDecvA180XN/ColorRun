@@ -23,7 +23,7 @@ public:
 	};
 
 	Collidable() = delete;
-	Collidable(Hub & InHub, EActorState InActorState);
+	Collidable(Hub & InHub, EActorState InActorState, EMeshType InMeshType = EMeshType::Static);
 	Collidable(const Collidable & Other) = delete;
 	Collidable(Collidable && Other);
 	Collidable & operator=(const Collidable & Other) = delete;
@@ -37,8 +37,12 @@ public:
 	BOOL IsReadyToDelete() const { return ActorState == EActorState::Dead; };
 
 	void SetMesh(std::string filename, std::string model, FLOAT CollisionSize);
+	
+	void SetMesh(w4::sptr<w4::render::Mesh> InMesh, FLOAT CollisionSize);
 
-	FLOAT GetPosition() const { return Mesh->getWorldTranslation().z; }
+	void SetSkinnedMesh(std::string filename, std::string model, FLOAT CollisionSize);
+
+	FLOAT GetPosition() const { return this->GetNode()->getWorldTranslation().z; };
 
 	w4::math::vec4 GetColor() const { return Color; }
 
@@ -62,6 +66,7 @@ protected:
 
 	w4::sptr<w4::core::Collider> Collider { nullptr };
 	w4::math::vec4 Color = {};
+	BOOL ShouldDie { FALSE };
 
 	EActorState ActorState { EActorState::None };
 	FLOAT LastStateChangeTime { 0.f };
