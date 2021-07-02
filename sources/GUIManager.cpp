@@ -97,7 +97,6 @@ void GUIManager::SetUIMenu()
 	Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 	Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
-	//Subtitle->setSize({600, 150});
 	Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 	Subtitle->setFontSize(48);
 
@@ -107,7 +106,6 @@ void GUIManager::SetUIMenu()
 		sptr<Button> Button = createWidget<class Button>(Root, utils::format("Level %d", i + 1).c_str());
 		Button->setHorizontalAlign(HorizontalAlign::Center);
 		Button->setVerticalAlign(VerticalAlign::Center);
-		//ReplayButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 		Button->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 		Button->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * (3 + i) / 8) });
 		Button->setSize({600, 150});
@@ -142,7 +140,6 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 	Title->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	Title->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 	Title->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 8) });
-	//Title->setSize({600, 150});
 	Title->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 	Title->setFontSize(72);
 
@@ -155,7 +152,6 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 		Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 		Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 		Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
-		//Subtitle->setSize({600, 150});
 		Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 		Subtitle->setFontSize(48);
 	}
@@ -164,10 +160,8 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 	sptr<Button> ReplayButton = createWidget<class Button>(Root, utils::format("Replay Level %d", CurrentLevel).c_str());
 	ReplayButton->setHorizontalAlign(HorizontalAlign::Center);
 	ReplayButton->setVerticalAlign(VerticalAlign::Center);
-	//ReplayButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	ReplayButton->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 	ReplayButton->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 4 / 8) });
-	//ReplayButton->setSize({600, 150});
 	ReplayButton->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 	ReplayButton->setFontSize(64);
 
@@ -181,10 +175,8 @@ void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 	sptr<Button> MenuButton = createWidget<class Button>(Root, "Back to Menu");
 	MenuButton->setHorizontalAlign(HorizontalAlign::Center);
 	MenuButton->setVerticalAlign(VerticalAlign::Center);
-	//MenuButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	MenuButton->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
 	MenuButton->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 5 / 8) });
-	//MenuButton->setSize({600, 150});
 	MenuButton->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
 	MenuButton->setFontSize(64);
 

@@ -28,7 +28,6 @@ void Entity::SetMesh(w4::sptr<w4::render::Mesh> InMesh)
 void Entity::SetTexture(std::string Filename)
 {
 	Texture = LinkToHub->ResolveTexture(Filename);
-	//Texture->setFiltering(w4::resources::Filtering::Level1);
 	if (Material == nullptr)
 	{
 		W4_LOG_ERROR("TEXTURE CAN BE ASSIGNED ONLY AFTER MATERIAL!");

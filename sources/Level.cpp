@@ -94,7 +94,6 @@ Level::Level(Hub & InHub, INDEX Number) :
 	Playhead->addChild(FrontLight);
 	Playhead->addChild(BackLight);
 	InHub.GetSceneRoot()->addChild(Playhead);
-	//InHub.GetSceneRoot()->addChild(Floor);
 }
 
 Level::~Level()
@@ -229,8 +228,6 @@ void Level::CreateLevel1(Hub & InHub)
 	constexpr SIZE NumPawnsLocal = 6; // initial crowd
 	constexpr SIZE NumPawnsGlobal = 3; // spread across level
 
-
-
 	std::array<w4::math::vec3, NumObstacles> ObstaclePositions =
 	{
 		{
@@ -263,25 +260,6 @@ void Level::CreateLevel1(Hub & InHub)
 			{ -3.f, 0.f, 8 * 8.f },
 		}
 	};
-
-	//std::array<w4::math::vec3, NumClutterObjects> ClutterPositions =
-	//{
-	//	{
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ +6.f, 0.f, 5 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f },
-	//		{ -4.f, 0.f, 4 * 8.f }
-	//		
-	//	}
-	//};
 	
 	// add obstacles
 	for (INDEX i = 0; i != NumObstacles; ++i)
@@ -317,18 +295,7 @@ void Level::CreateLevel1(Hub & InHub)
 		Pawns.back()->GetNode()->setWorldRotation(Rotator());
 
 		Pawns.back()->SetColor({ 1.f, 1.f, 1.f, 1.f });
-		//Pawns.back()->Parent(Playhead);
 	}
-	
-	//for (INDEX i = 0; i != NumClutterObjects; ++i)
-	//{
-	//	INDEX Offset = i + NumObstacles;
-	//	Entities.emplace_back(InHub);
-	//	Entities[Offset].SetMesh("meshes/wall.w4a"s, "wall"s);
-	//	Entities[Offset].SetMaterial("lambert"s);
-	//	Entities[Offset].SetTexture("textures/wall.jpg");
-	//	Entities[Offset].GetNode().setWorldTranslation(ClutterPositions[i]);
-	//}
 
 	// create battle field
 	sptr<Entity> BattleField = make::uptr<Entity>(InHub);

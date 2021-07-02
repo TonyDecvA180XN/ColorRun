@@ -18,9 +18,6 @@ void Enemy::UpdateRun(FLOAT PlayheadPosition)
 
 void Enemy::UpdateBattle(w4::math::vec3 ConvergePoint)
 {
-	static constexpr FLOAT SpawnDistance = 24.f;
-	//static constexpr FLOAT DespawnDistance = 16.f;
-	static constexpr FLOAT SpawnTime = 1.f;
 	static constexpr FLOAT DespawnTime = 1.f;
 
 	switch (ActorState)
