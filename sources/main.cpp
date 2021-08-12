@@ -25,12 +25,12 @@ public:
 	{
 		DebugHelper::buildGizmo();
 		
-		Hub = make::sptr<class Hub>(Render::getRoot());
+		Hub = make::sptr<class Hub>(Render::getRoot(), ClockCounter);
 
 		ChangeState(EGameState::GameStateMenu, 0);
 	}
 
-	void ChangeState(EGameState NextState, INT64 Param)
+	void ChangeState(EGameState NextState, INT Param)
 	{
 		// some event BS
 		static sptr<EventImpl<Touch::Begin, touchProxy>::Handle> HandlerBegin;
@@ -97,6 +97,7 @@ public:
 	void onUpdate(float dt) override
 	{
 		ClockCounter += dt;
+		Hub->Update(ClockCounter);
 		
 		EGameState NextState = EGameState::GameStateNone;
 		INDEX NextLevel = 0;
@@ -105,7 +106,8 @@ public:
 		{
 			case EGameState::GameStateLevel:
 			{
-				NeedStateSwitch = CurrentLevel->Update(dt);
+				NextLevel = CurrentLevel->Update(dt);
+				NeedStateSwitch = NextLevel != 0;
 				if (NeedStateSwitch)
 				{
 					NextState = EGameState::GameStateResult;

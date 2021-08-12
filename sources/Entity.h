@@ -10,28 +10,43 @@ public:
 	Entity() = delete;
 	Entity(const Entity & other) = delete;
 	Entity(Entity && other) = default;
-	Entity(Hub & hub);
+	Entity(Hub & InHub, EMeshType InMeshType = EMeshType::Static);
+	Entity & operator=(const Entity & Other) = delete;
+	Entity & operator=(Entity && Other) = delete;
+	virtual ~Entity() = default;
 
-	void SetMesh(std::string filename, std::string model);
+	void SetMesh(std::string Filename, std::string Model);
 
-	void SetTexture(std::string filename);
+	void SetMesh(w4::sptr<w4::render::Mesh> InMesh);
 
-	void SetMaterial(std::string name);
+	void SetSkinnedMesh(std::string Filename, std::string Model);
 
-	void Update(FLOAT PlayheadPosition) {};
+	void SetTexture(std::string Filename);
 
-	w4::sptr<w4::render::Node> Transform();
+	void SetMaterial(std::string Name);
 
-	w4::sptr<w4::resources::MaterialInst> Material();
+	void SetColorMaterial(std::string Name);
 
-	void Parent(w4::sptr<w4::render::Node> parent);
+	virtual void Update(FLOAT PlayheadPosition) {};
 
-	virtual ~Entity() = default;;
+	void Play(std::string AnimationName);
+
+	w4::sptr<w4::render::Node> GetNode() const;
+
+	w4::sptr<w4::resources::MaterialInst> GetMaterial();
+
+	void Parent(w4::sptr<w4::render::Node> Parent);
 
 protected:
-	Hub & hub;
+	static w4::sptr<Hub> LinkToHub;
 
-	w4::sptr<w4::render::Mesh> m_mesh {};
-	w4::sptr<w4::resources::Texture> m_texture {};
-	w4::sptr<w4::resources::MaterialInst> m_material {};
+	INDEX Id { 0 };
+	EMeshType MeshType { EMeshType::Static };
+	w4::sptr<w4::render::Node> Mesh {};
+	w4::sptr<w4::render::SkinnedMesh> SkinnedMesh {};
+	w4::sptr<w4::resources::Texture> Texture {};
+	w4::sptr<w4::resources::MaterialInst> Material {};
+
+private:
+	static INDEX FreeId;
 };

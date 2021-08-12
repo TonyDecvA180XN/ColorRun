@@ -14,3 +14,9 @@ constexpr auto FALSE = 0;
 using SIZE = UINT64;
 using ID = UINT64;
 using INDEX = UINT64;
+
+enum class EMeshType
+{
+	Static,
+	Skinned
+};

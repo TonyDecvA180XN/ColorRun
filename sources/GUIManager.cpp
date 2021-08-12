@@ -16,22 +16,30 @@ void GUIManager::SetUILevel()
 {
 	Clear();
 
+	sptr<gui::Image> ColorBG = createWidget<class gui::Image>(Root, "ui/button.png", ivec2{ 700, 180 });
+	ColorBG->setHorizontalAlign(HorizontalAlign::Center);
+	ColorBG->setVerticalAlign(VerticalAlign::Center);
+	ColorBG->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	ColorBG->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 16) });
+
 	// create current color display
-	auto colorLabel = createWidget<Label>(Root, "Current Color:       ");
-	colorLabel->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 8) });
+	auto colorLabel = createWidget<Label>(Root, "Current Color:");
+	colorLabel->setPosition({ static_cast<INT>(cWidth * 15 / 32), static_cast<INT>(cHeight * 2 / 16) });
 	colorLabel->setSizePolicy(SizePolicy::Fixed, SizePolicy::Fixed);
 	colorLabel->setHorizontalAlign(HorizontalAlign::Center);
 	colorLabel->setVerticalAlign(VerticalAlign::Center);
 	colorLabel->setSize({600, 120});
-	colorLabel->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	colorLabel->setFontSize(64);
+	colorLabel->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+	colorLabel->setFontSize(56);
 	colorLabel->setTextAlign(HorizontalAlign::Left, VerticalAlign::Center);
+	colorLabel->setBgColor({ 0, 0, 0, 0 });
 
 	m_currentColor = createWidget<gui::Image>(Root, Filepath + "000.png", ivec2{ 100, 100 });
 	m_currentColor->setHorizontalAlign(HorizontalAlign::Center);
 	m_currentColor->setVerticalAlign(VerticalAlign::Center);
 	m_currentColor->setSizePolicy(SizePolicy::Fixed, SizePolicy::Fixed);
-	m_currentColor->setPosition({ static_cast<INT>(cWidth * 45 / 64), static_cast<INT>(cHeight / 8) });
+	m_currentColor->setPosition({ static_cast<INT>(cWidth * 46 / 64), static_cast<INT>(cHeight * 2 / 16) });
+	m_currentColor->setOpacity(1.f);
 
 	// panel
 	auto colorPanel = createWidget<gui::Image>(Root, Filepath + "panel.png", ivec2{ 400, 400 });
@@ -50,6 +58,7 @@ void GUIManager::SetUILevel()
 		m_selectors[i]->setHorizontalAlign(HorizontalAlign::Center);
 		m_selectors[i]->setVerticalAlign(VerticalAlign::Center);
 		m_selectors[i]->setSizePolicy(SizePolicy::Fixed, SizePolicy::Fixed);
+		m_selectors[i]->setOpacity(0.9f);
 		
 		FLOAT angle = 90_deg + (i * 120_deg);
 		FLOAT radius = 80;
@@ -80,114 +89,150 @@ void GUIManager::SetUIMenu()
 	Background->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 2) });
 
 	// create welcome text
-	sptr<Label> Title = createWidget<Label>(Root, "COLOR RUN");
+	sptr<gui::Image> Title = createWidget<gui::Image>(Root, "ui/logo.png", ivec2{ static_cast<INT>(1902.f/1520*750), 750});
 	Title->setHorizontalAlign(HorizontalAlign::Center);
 	Title->setVerticalAlign(VerticalAlign::Center);
-	Title->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	Title->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	Title->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 8) });
-	//Title->setSize({600, 150});
-	Title->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	Title->setFontSize(72);
-
-	// create game inviting text
-	sptr<Label> Subtitle = createWidget<Label>(Root, "Choose level");
-	Subtitle->setHorizontalAlign(HorizontalAlign::Center);
-	Subtitle->setVerticalAlign(VerticalAlign::Center);
-	Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
-	Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
-	//Subtitle->setSize({600, 150});
-	Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	Subtitle->setFontSize(48);
+	Title->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
+	//Title->setSize({ static_cast<INT>(1902.f/1520*750), 750});
 
 	constexpr SIZE NumLevels = 5;
 	for (INDEX i = 0; i != NumLevels; ++i)
 	{
-		sptr<Button> Button = createWidget<class Button>(Root, utils::format("Level %d", i + 1).c_str());
+		sptr<ImageButton> Button = createWidget<class ImageButton>(Root, "ui/button.png", "ui/button_pressed.png", ivec2{ 450, 150 });
 		Button->setHorizontalAlign(HorizontalAlign::Center);
 		Button->setVerticalAlign(VerticalAlign::Center);
-		//ReplayButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 		Button->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-		Button->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * (3 + i) / 8) });
-		Button->setSize({600, 150});
-		Button->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-		Button->setFontSize(64);
+		Button->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * (17 + 3 * i) / 32) });
 
 		Button->onTap([this, i]() 
 					  {
 						  NextState = make::sptr<EGameState>(EGameState::GameStateLevel);
 						  NextLevel = make::sptr<INDEX>(i + 1);
 					  });
+
+		sptr<Label> LevelLabel = createWidget<class Label>(Root, utils::format("Level %d", i + 1).c_str());
+		LevelLabel->setHorizontalAlign(HorizontalAlign::Center);
+		LevelLabel->setVerticalAlign(VerticalAlign::Center);
+		//ReplayButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+		LevelLabel->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+		LevelLabel->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * (17 + 3 * i) / 32) });
+		LevelLabel->setSize({600, 150});
+		LevelLabel->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+		LevelLabel->setFontSize(56);
+		LevelLabel->setBgColor({ 0, 0, 0, 0 });
 	}
 }
 
-void GUIManager::SetUIResult(INDEX CurrentLevel, UINT64 Result)
+void GUIManager::SetUIResult(INDEX CurrentLevel, INT Result)
 {
 	Clear();
 
 	// create background image
-	sptr<Widget> Background = gui::createWidget<gui::Image>(Root, Filepath + "bg.png", ivec2{ 1080, 1920 });
+	sptr<Widget> Background = gui::createWidget<gui::Image>(Root, "ui/bg.png", ivec2{ 1080, 1920 });
 	Background->setHorizontalAlign(HorizontalAlign::Center);
 	Background->setVerticalAlign(VerticalAlign::Center);
 	Background->setSizePolicy(SizePolicy::Fixed, SizePolicy::Fixed);
 	Background->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 2) });
-	Background->setOpacity(0.5f);
+	//Background->setOpacity(0.5f);
+
+	// create result plate
+	sptr<gui::Image> Plate = createWidget<gui::Image>(Root, "ui/plate.png", ivec2{ 900, 800 });
+	Plate->setHorizontalAlign(HorizontalAlign::Center);
+	Plate->setVerticalAlign(VerticalAlign::Center);
+	Plate->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	Plate->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 17 / 32) });
 
 	// create welcome text
-	sptr<Label> Title = createWidget<Label>(Root, "LEVEL COMPLETE");
-	Title->setHorizontalAlign(HorizontalAlign::Center);
-	Title->setVerticalAlign(VerticalAlign::Center);
-	Title->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
-	Title->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	Title->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight / 8) });
-	//Title->setSize({600, 150});
-	Title->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	Title->setFontSize(72);
+	std::string ResultText = (Result > 0) ? "LEVEL"s : "GAME"s;
+	sptr<Label> Title1 = createWidget<Label>(Root, ResultText);
+	Title1->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	Title1->setHorizontalAlign(HorizontalAlign::Center);
+	Title1->setVerticalAlign(VerticalAlign::Center);
+	Title1->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+	Title1->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 6 / 16) });
+	Title1->setSize({ 800, 200 });
+	Title1->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+	Title1->setFontSize(84);
+	Title1->setBgColor({ 0, 0, 0, 0 });
 
-	// create game inviting text
-	sptr<Label> Subtitle = createWidget<Label>(Root, utils::format("Your result: %d", Result));
-	Subtitle->setHorizontalAlign(HorizontalAlign::Center);
-	Subtitle->setVerticalAlign(VerticalAlign::Center);
-	Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
-	Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 2 / 8) });
-	//Subtitle->setSize({600, 150});
-	Subtitle->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	Subtitle->setFontSize(48);
+	ResultText = (Result > 0) ? "COMPLETE"s : "OVER"s;
+	sptr<Label> Title2 = createWidget<Label>(Root, ResultText);
+	Title2->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	Title2->setHorizontalAlign(HorizontalAlign::Center);
+	Title2->setVerticalAlign(VerticalAlign::Center);
+	Title2->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+	Title2->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 7 / 16) });
+	Title2->setSize({ 800, 200 });
+	Title2->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+	Title2->setFontSize(84);
+	Title2->setBgColor({ 0, 0, 0, 0 });
 
-	// replay button
-	sptr<Button> ReplayButton = createWidget<class Button>(Root, utils::format("Replay Level %d", CurrentLevel).c_str());
-	ReplayButton->setHorizontalAlign(HorizontalAlign::Center);
-	ReplayButton->setVerticalAlign(VerticalAlign::Center);
-	//ReplayButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
-	ReplayButton->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	ReplayButton->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 4 / 8) });
-	//ReplayButton->setSize({600, 150});
-	ReplayButton->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	ReplayButton->setFontSize(64);
+	// create score text
+	if (Result > 0)
+	{
+		sptr<Label> Subtitle = createWidget<Label>(Root, utils::format("Score: %d", Result));
+		Subtitle->setHorizontalAlign(HorizontalAlign::Center);
+		Subtitle->setVerticalAlign(VerticalAlign::Center);
+		Subtitle->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+		Subtitle->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+		Subtitle->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 8 / 16) });
+		//Subtitle->setSize({600, 150});
+		Subtitle->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+		Subtitle->setFontSize(64);
+		Subtitle->setBgColor({ 0, 0, 0, 0 });
+	}
 
-	ReplayButton->onTap([this, CurrentLevel]() 
+	sptr<ImageButton> ReplayPlate = createWidget<class ImageButton>(Root, "ui/button.png", "ui/button_pressed.png", ivec2{ 500, 120 });
+	ReplayPlate->setHorizontalAlign(HorizontalAlign::Center);
+	ReplayPlate->setVerticalAlign(VerticalAlign::Center);
+	ReplayPlate->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	ReplayPlate->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 9 / 16) });
+
+	ReplayPlate->onTap([this, CurrentLevel]() 
 					{
 						NextState = make::sptr<EGameState>(EGameState::GameStateLevel);
-						NextLevel = make::sptr<INDEX>(CurrentLevel);
+						NextLevel = make::sptr<INDEX>(CurrentLevel + 1);
 					});
 
-	// return to menu button
-	sptr<Button> MenuButton = createWidget<class Button>(Root, "Back to Menu");
+	// next Label
+	std::string replayText = (Result > 0) ? "Next Level" : "Replay Level";
+	sptr<Label> ReplayLabel = createWidget<class Label>(Root, replayText);
+	ReplayLabel->setHorizontalAlign(HorizontalAlign::Center);
+	ReplayLabel->setVerticalAlign(VerticalAlign::Center);
+	//ReplayLabel->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+	ReplayLabel->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	ReplayLabel->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 9 / 16) });
+	//ReplayLabel->setSize({600, 150});
+	ReplayLabel->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+	ReplayLabel->setFontSize(56);
+	ReplayLabel->setBgColor({ 0, 0, 0, 0 });
+
+
+	// to menu button
+	sptr<ImageButton> MenuButton = createWidget<class ImageButton>(Root, "ui/button.png", "ui/button_pressed.png", ivec2{ 500, 120 });
 	MenuButton->setHorizontalAlign(HorizontalAlign::Center);
 	MenuButton->setVerticalAlign(VerticalAlign::Center);
-	//MenuButton->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
 	MenuButton->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
-	MenuButton->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 5 / 8) });
-	//MenuButton->setSize({600, 150});
-	MenuButton->setFont("https://fonts.googleapis.com/css2?family=Roboto", "Roboto");
-	MenuButton->setFontSize(64);
+	MenuButton->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 41 / 64) });
 
 	MenuButton->onTap([this]() 
 					{
 						NextState = make::sptr<EGameState>(EGameState::GameStateMenu);
 					});
+
+	// return to menu Label
+	sptr<Label> MenuLabel = createWidget<class Label>(Root, "Back to Menu");
+	MenuLabel->setHorizontalAlign(HorizontalAlign::Center);
+	MenuLabel->setVerticalAlign(VerticalAlign::Center);
+	//MenuLabel->setTextAlign(HorizontalAlign::Center, VerticalAlign::Center);
+	MenuLabel->setSizePolicy(SizePolicy::Auto, SizePolicy::Auto);
+	MenuLabel->setPosition({ static_cast<INT>(cWidth / 2), static_cast<INT>(cHeight * 41 / 64) });
+	//MenuLabel->setSize({600, 150});
+	MenuLabel->setFont("https://fonts.googleapis.com/css2?family=Peralta", "Peralta");
+	MenuLabel->setFontSize(56);
+	MenuLabel->setBgColor({ 0, 0, 0, 0 });
+
 }
 
 std::optional<vec4> GUIManager::UpdateUILevel(vec2 cursor, const BOOL InIsReleased)
